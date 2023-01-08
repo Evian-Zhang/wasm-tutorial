@@ -1,0 +1,10 @@
+[book]
+authors = ["Evian-Zhang"]
+language = "zh-Hans"
+multilingual = false
+src = "src"
+title = "WASM 汇编入门教程"
+
+[output.html]
+mathjax-support = true
+git-repository-url = "https://github.com/Evian-Zhang/wasm-tutorial"
