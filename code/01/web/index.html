@@ -1,0 +1,16 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>WASM Test</title>
+  </head>
+
+  <body>
+    <script>
+      WebAssembly.instantiateStreaming(fetch("./adder.wasm"))
+        .then(obj => {
+            console.log(obj.instance.exports.add(1, 2));
+        });
+    </script>
+  </body>
+</html>
