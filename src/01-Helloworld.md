@@ -67,7 +67,7 @@ WASM模块目前最常用的场景，就是在Web上使用。因此，我们可�
 
 首先，我们需要引入[wasmer](https://crates.io/crates/wasmer)库（[wasmtime](https://crates.io/crates/wasmtime)等其他库也可以）。我们的Rust程序为：
 
-```rust
+```rust, ignore
 use anyhow::Result;
 use std::fs;
 use wasmer::{Imports, Instance, Module, Store, TypedFunction};
