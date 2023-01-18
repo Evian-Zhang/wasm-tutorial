@@ -4,3 +4,4 @@
 
 - [Hello world](./01-Helloworld.md)
 - [基础概念与工具链](./02-基础概念与工具链.md)
+- [WASM的生成](./03-WASM的生成.md)
