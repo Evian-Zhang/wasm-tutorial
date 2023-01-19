@@ -63,7 +63,7 @@ console.log(add(1, 2));
 
 事实上，这个功能目前还是一个提案[ES Module Integration Proposal for WebAssembly](https://github.com/WebAssembly/esm-integration)，没有被广泛地实现。目前，实现这个功能还有一些阻碍，例如，之前我们提到，对WASM的引入都是异步的，因此如果要全局直接`import`，势必要Top-level Await，而这个也没有很好地实现。
 
-但是，尽管目前没有普遍实现，一个好消息是：[Webpack支持以ES Module的形式导入WASM程序](https://webpack.js.org/configuration/module/#ruletype)！具体的代码可以参考本仓库的[web-webpack](https://github.com/Evian-Zhang/wasm-tutorial/master/code/04/web-webpack/)目录，其中的代码参考了[ballercat/minimal-webpack5-wasm-demo](https://github.com/ballercat/minimal-webpack5-wasm-demo)。
+但是，尽管目前没有普遍实现，一个好消息是：[Webpack支持以ES Module的形式导入WASM程序](https://webpack.js.org/configuration/module/#ruletype)！具体的代码可以参考本仓库的[web-webpack](https://github.com/Evian-Zhang/wasm-tutorial/tree/main/code/04/web-webpack)目录，其中的代码参考了[ballercat/minimal-webpack5-wasm-demo](https://github.com/ballercat/minimal-webpack5-wasm-demo)。
 
 简单而言，我们只需要在`webpack.config.js`中加入下面一段代码：
 
