@@ -8,9 +8,9 @@ fn main() -> Result<()> {
     let module = Module::new(&store, wasm_bytes)?;
     let imports = Imports::default();
     let instance = Instance::new(&mut store, &module, &imports)?;
-    let run_func: TypedFunction<(u32, u32), u32> =
+    let add: TypedFunction<(u32, u32), u32> =
         instance.exports.get_typed_function(&mut store, "add")?;
-    let sum = run_func.call(&mut store, 1, 2)?;
+    let sum = add.call(&mut store, 1, 2)?;
     println!("Sum is {sum}");
     Ok(())
 }
