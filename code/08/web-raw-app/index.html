@@ -1,0 +1,24 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>WASM Test</title>
+  </head>
+
+  <body>
+    <script>
+      const importObject = {
+        outer: {
+            log_number: (number) => console.log(`In WASM, we got ${number}`),
+            instability: new WebAssembly.Global({ value: "i32", mutable: false }, -5)
+        }
+      };
+      WebAssembly.instantiateStreaming(fetch("./common.wasm"), importObject)
+        .then(obj => {
+            console.log('Calculating 5 x 8 with instability -5 ...');
+            const prod = obj.instance.exports.wasm_mul(5, 8);
+            console.log(`From outside, we got ${prod}`);
+        });
+    </script>
+  </body>
+</html>
