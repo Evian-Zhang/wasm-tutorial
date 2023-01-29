@@ -1,0 +1,27 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>WASM Test</title>
+  </head>
+
+  <body>
+    <script>
+      const memory = new WebAssembly.Memory({ initial: 1 });
+      const importObject = {
+        outer: {
+            log: (index, length) => {
+                const bytes = new Uint8Array(memory.buffer, index, length);
+                const string = new TextDecoder("utf8").decode(bytes);
+                console.log(string);
+            },
+            memory: memory
+        }
+      };
+      WebAssembly.instantiateStreaming(fetch("./string_in_wasm.wasm"), importObject)
+        .then(obj => {
+            obj.instance.exports.output_inside_string();
+        });
+    </script>
+  </body>
+</html>
