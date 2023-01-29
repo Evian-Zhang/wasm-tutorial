@@ -1,0 +1,402 @@
+<!DOCTYPE HTML>
+<html lang="zh-Hans" class="sidebar-visible no-js light">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>内存与引用 - WASM 汇编入门教程</title>
+
+
+        <!-- Custom HTML head -->
+        
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff" />
+
+        <link rel="icon" href="favicon.svg">
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="highlight.css">
+        <link rel="stylesheet" href="tomorrow-night.css">
+        <link rel="stylesheet" href="ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+        <!-- MathJax -->
+        <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    </head>
+    <body>
+        <!-- Provide site root to javascript -->
+        <script>
+            var path_to_root = "";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "light";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            var html = document.querySelector('html');
+            html.classList.remove('no-js')
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add('js');
+        </script>
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            var html = document.querySelector('html');
+            var sidebar = 'hidden';
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            }
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <div class="sidebar-scrollbox">
+                <ol class="chapter"><li class="chapter-item expanded affix "><a href="index.html">引言</a></li><li class="chapter-item expanded "><a href="01-Helloworld.html"><strong aria-hidden="true">1.</strong> Hello world</a></li><li class="chapter-item expanded "><a href="02-基础概念与工具链.html"><strong aria-hidden="true">2.</strong> 基础概念与工具链</a></li><li class="chapter-item expanded "><a href="03-WASM的生成.html"><strong aria-hidden="true">3.</strong> WASM的生成</a></li><li class="chapter-item expanded "><a href="04-WASM的使用.html"><strong aria-hidden="true">4.</strong> WASM的使用</a></li><li class="chapter-item expanded "><a href="05-基本语法.html"><strong aria-hidden="true">5.</strong> 基本语法</a></li><li class="chapter-item expanded "><a href="06-变量与常量.html"><strong aria-hidden="true">6.</strong> 变量与常量</a></li><li class="chapter-item expanded "><a href="07-控制语句与基本块.html"><strong aria-hidden="true">7.</strong> 控制语句与基本块</a></li><li class="chapter-item expanded "><a href="08-导入与导出.html"><strong aria-hidden="true">8.</strong> 导入与导出</a></li><li class="chapter-item expanded "><a href="09-内存与引用.html" class="active"><strong aria-hidden="true">9.</strong> 内存与引用</a></li><li class="chapter-item expanded "><a href="10-WASI.html"><strong aria-hidden="true">10.</strong> WASI</a></li></ol>
+            </div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky bordered">
+                    <div class="left-buttons">
+                        <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </button>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">WASM 汇编入门教程</h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/Evian-Zhang/wasm-tutorial" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="内存与引用"><a class="header" href="#内存与引用">内存与引用</a></h1>
+<p>在上一章的最后，我们提到，我们暂时将注意力集中在高级语言的基本数字类型与WASM的数字类型之间的转化，而在本章中，我们就来谈谈对于高级的复杂聚合类型，WASM的处理方法是什么。不仅如此，我们还要谈一谈，无论在高级语言还是汇编语言中，都非常常见的概念——「内存」与「引用」。</p>
+<h2 id="为什么要引入内存"><a class="header" href="#为什么要引入内存">为什么要引入内存</a></h2>
+<p>首先我们需要解决的问题是，为什么WASM中需要内存这个概念？在高级语言或者汇编语言中的内存提供的功能中，有哪些是WASM目前没有内存这一概念就做不了的事。</p>
+<p>第一，在高级语言中，当我们需要临时存储一个值的时候，往往会使用局部变量，而局部变量往往会以内存的形式存在，更具体地说，是使用内存的「栈区」这一概念。但是在WASM中，我们不仅有局部变量、全局变量这种机制，而且通过模拟栈机的peek和poke，也可以实现临时存储值这一功能。因此这一功能并不需要内存就可以实现。</p>
+<p>内存除了栈区，还有堆区。在C语言中，我们往往使用<code>malloc</code>、<code>free</code>等来操作堆区的内存，而在Rust中，<code>Box</code>等指针往往也会使用堆区的内存。在高级语言中，堆区往往有两个作用：</p>
+<ul>
+<li>
+<p>用来分配动态大小的内存</p>
+<p>对于在运行时才能知道大小的数组等大小是动态的对象，我们往往将其分配在堆区，以提高程序的优化程度。在这种情况下，WASM不用内存确实很难做到。</p>
+</li>
+<li>
+<p>用来分配所有权不定的对象</p>
+<p>对于所有权难以确定的对象，高级语言往往有很多种处理方法。而将其放在堆区，也是一个很常用的手段。尽管有不放在堆区的方法，但是WASM大部分情况下还是由高级语言编译而来，所以难以避免这种情形。</p>
+</li>
+</ul>
+<p>内存除了这些用途之外，还有一个特性离不开内存，那就是「引用」。高级语言中的引用，在汇编层面，往往会编译为一个存有内存地址的指针。在常见的C ABI中，如果函数的返回值类型是结构体，往往也会要求底层实现是以指针的形式实现。而在WASM中，尽管有局部变量、栈机机制，但是如果没有内存，就没有办法实现指针、引用这一机制。</p>
+<h2 id="wasm内存的定义与使用"><a class="header" href="#wasm内存的定义与使用">WASM内存的定义与使用</a></h2>
+<p>在WASM中，定义一个内存十分简单：</p>
+<pre><code class="language-wasm">(module
+    (memory 1)
+)
+</code></pre>
+<p>这里的<code>1</code>表示WASM的内存至少有1页大小（WASM中定义一页为64KB）。</p>
+<p>那我们该如何使用WASM的内存呢？我们可以用一句话粗略地理解：WASM中的内存是用数组模拟的内存。我们通过<code>(memory 1)</code>申请的，至少有64KB大小的内存，实际上可以看做一个数组<code>[u8; 1 &lt;&lt; 16]</code>，也就是一个长度为64KB的字节数组。</p>
+<p>这意味着什么事呢？我们一般意义上的「内存地址」，实际上变成了这个数组的索引值。因此，也就是取值范围为0到64K的<strong>i32类型的数</strong>（目前是<code>i32</code>类型，<a href="https://github.com/WebAssembly/memory64/blob/main/proposals/memory64/Overview.md">Memory64提案</a>将引入<code>i64</code>类型的数也作为索引类型）。</p>
+<p>理解了这一点，我们就可以轻松理解WASM中的内存使用方法了：</p>
+<pre><code class="language-wasm">i32.const 0
+i32.load
+</code></pre>
+<p><code>i32.load</code>指令接收一个操作数，也就是第一句<code>i32.const 0</code>。这条指令执行的结果，就是在当前模块的内存中，取地址为0的<code>i32</code>类型的数。</p>
+<p>类似地：</p>
+<pre><code class="language-wasm">i32.const 0
+i32.const 323
+i32.store
+</code></pre>
+<p>这些指令的结果是，将<code>i32</code>类型的数323存储到当前模块内存中地址为0的位置。</p>
+<p>关于内存读写指令，还有两点需要注意的：</p>
+<p>第一，WASM提供了<code>offset</code>机制，能够更方便地做内存读写：</p>
+<pre><code class="language-wasm">i32.const 0
+i32.load offset=4
+</code></pre>
+<p>这些指令的结果是，从内存地址0开始，偏移值为4（也就是内存地址为4）处读取<code>i32</code>类型的值。</p>
+<p>WASM提供这种机制的原因是，在很多情况下，内存值是动态确定的（例如某个结构体的地址），但是偏移值是确定的（例如读取这个结构体的某个字段）。这样可以减少内存地址的计算。</p>
+<p>第二，内存中的值，最小的单位是1字节，而WASM中指令操作的单位是<code>i32</code>或者<code>i64</code>。因此，WASM在读取内存时，提供了诸如<code>i32.load8_s</code>、<code>i32.load16_u</code>、<code>i32.store8</code>等操作，分别对应读取、写入的比特数（读取时还应考虑有无符号扩展）。熟悉汇编指令的开发者对这个一定了如指掌，这里不再赘述。</p>
+<p>在有了这些概念以及指令之后，我们之前提到的，在WASM中使用内存的必要性的两个问题就得到了解决。</p>
+<h2 id="通过内存与外界交互"><a class="header" href="#通过内存与外界交互">通过内存与外界交互</a></h2>
+<p>在拥有了内存之后，我们终于能够解决之前提出的，怎样在高级语言与WASM之间，传递复杂聚合对象的问题了。而解决这个问题的方法，就是通过内存的导入与导出。</p>
+<p>与函数、全局变量类似，内存也可以导入与导出。我们可以写</p>
+<pre><code class="language-wasm">(module
+    (memory (export &quot;memory&quot;) 1)
+)
+</code></pre>
+<p>来声明我们当前模块导出至外界一个大小至少为64KB的内存。而外界也可以通过与上一章中类似的方法，获取内存。以wasmer为例，我们可以通过</p>
+<pre><code class="language-rust  ignore">let memory = instance.exports.get_memory(&quot;memory&quot;)?;
+let memory_view = memory.view(&amp;store);</code></pre>
+<p>来获取导出的内存，然后对<code>memory_view</code>进行读写。这里需要注意的一点是，<code>memory_view</code>需要获取对<code>store</code>的共享引用，因此在每一次我们调用WASM导出的函数时，会对<code>store</code>进行独占引用，因此在调用后，我们需要重新使用<code>.view</code>函数来获取<code>memory_view</code>。这么做的原因是，在WASM执行的过程中，可能会对内存进行扩容等操作，而这些操作可能会让内存地址产生改变，从而需要重新获取内存。</p>
+<p>我们在高级语言中可以对WASM的内存进行读写，这有什么好处呢？我们知道，之前之所以我们没有办法将高级语言中的复杂聚合类型传入WASM的函数，是因为我们缺少相对的表达能力。WASM的函数大部分只接受基本数字类型，我们没法传结构体进去；WASM也不能读写外界的内存，所以我们传数组的首地址进去更是无可奈何。</p>
+<p>而通过读写WASM内存，我们就有了一种传递复杂聚合类型的能力。以下面这个例子为例：</p>
+<p>我们创建<code>transformer.wat</code>：</p>
+<pre><code class="language-wasm">(module
+    (memory (export &quot;memory&quot;) 1)
+    (func (export &quot;transform&quot;) (param $index i32) (param $length i32)
+        (local $ch i32)
+        loop $main_loop
+            (i32.le_u (local.get $length) (i32.const 0))
+            if
+                return
+            end
+            (i32.store8
+                (local.get $index)
+                (i32.add
+                    (i32.load8_u (local.get $index))
+                    (i32.const 1)
+                )
+            )
+            (local.set $index (i32.add (local.get $index) (i32.const 1)))
+            (local.set $length (i32.sub (local.get $length) (i32.const 1)))
+            br $main_loop
+        end
+    )
+)
+</code></pre>
+<p>然后我们在Rust中，仍然使用wasmer，在实例化WASM之后，使用</p>
+<pre><code class="language-rust  ignore">let transform: TypedFunction&lt;(u32, u32), ()&gt; = instance
+    .exports
+    .get_typed_function(&amp;mut store, &quot;transform&quot;)?;
+let memory = instance.exports.get_memory(&quot;memory&quot;)?;
+
+// Prepare source
+let source: [u8; 6] = [1, 1, 4, 5, 1, 4];
+let memory_view = memory.view(&amp;store);
+memory_view.write(0, &amp;source)?;
+
+transform.call(&amp;mut store, 0, 6)?;
+
+// Retrieve transformed source
+let memory_view = memory.view(&amp;store);
+let mut transformed_source = [0; 6];
+memory_view.read(0, &amp;mut transformed_source)?;
+
+println!(&quot;Transformed source is {transformed_source:?}&quot;);</code></pre>
+<p>下面我们来解释这个例子的功能。</p>
+<ol>
+<li>我们在WASM中，导出了WASM的内存，同时提供了一个函数<code>transform</code>。这个函数接受两个参数：WASM内存中的地址，以及相应对象的长度。</li>
+<li>我们在Rust中，创建了一个长度为6字节数组，其内容为1, 1, 4, 5, 1, 4。将其写入内存地址0后，调用<code>transform</code>函数时，第一个参数就传入的是0，也就是这个数组在WASM内存中的首地址，而第二个参数传入的是6，也就是这个数组的长度。</li>
+<li>在<code>transform</code>函数中，我们遍历WASM中，从首地址0开始，长度为6的每个字节，将其加1后写回</li>
+<li>在Rust中，调用WASM导出的<code>transform</code>之后，我们再次读取内存中相应的片段，并输出，可以发现值变成了2, 2, 5, 6, 2, 5。</li>
+</ol>
+<p>这就是利用读写WASM内存，在高级语言与WASM之间传递复杂聚合类型的一种途径。</p>
+<h2 id="沙盒"><a class="header" href="#沙盒">沙盒</a></h2>
+<p>为什么传递复杂聚合类型要这么麻烦？我们可以注意到，如果需要传递复杂聚合类型，<strong>我们需要两次整段内存的复制</strong>！一次从嵌入环境复制到WASM中，一次是从WASM中复制回嵌入环境中。</p>
+<p>如果经常在各种讨论版中关注WASM的开发者一定会注意到，往往会有一些WASM与原生JavaScript性能的比较，有些情况WASM会偏慢，然后就会有人评论说，你这测试方法不标准，偏慢的时间应该是在传递数据，而不是在计算。并且也会有很多专业的架构师，正是考虑到传递数据时偏慢，才会三思要不要使用WASM。</p>
+<p>事实上，这么做的原因，是WASM的一个招牌特性——沙盒（Sandbox）。我们其实可以注意到，如果外界不向WASM导入内存读写函数，那么，<strong>WASM永远无法读写除了自身那一段内存以外的内存</strong>。也就是说，WASM的程序是跑在一个沙盒内的，绝对不会影响宿主环境的内存。</p>
+<h2 id="字符串"><a class="header" href="#字符串">字符串</a></h2>
+<p>我们之前一直没有在WASM中真正处理过字符串，但是字符串确实是一个非常常见的编程元素。在大部分高级编程语言中，字符串在底层的实现都是数组。而我们了解了WASM的内存概念，是不是终于可以处理字符串了呢！</p>
+<p>事实上，WASM特地为字符串常量设计了一个非常方便的语法：数据段（Data segment）。</p>
+<p>(module
+(memory 1)
+(data (i32.const 0) &quot;Hello&quot;)
+)</p>
+<p>这一段代码的意思是，在WASM的内存中，地址为0开始，定义一串字符串&quot;Hello&quot;。当我们实例化这个WASM模块时，它的内存从0开始就会有这一串字符串。</p>
+<p>有了这个工具，我们终于可以随心所欲在WASM中输出文本了。</p>
+<p>我们编写<code>string_in_wasm.wat</code>：</p>
+<pre><code class="language-wasm">(module
+    (import &quot;outer&quot; &quot;memory&quot; (memory 1))
+    (import &quot;outer&quot; &quot;log&quot; (func $log (param i32 i32)))
+
+    (data (i32.const 0) &quot;关注希月萌奈喵&quot;)
+
+    (func (export &quot;output_inside_string&quot;)
+        (call $log (i32.const 0) (i32.const 21))
+    )
+)
+</code></pre>
+<p>以及<code>index.html</code>（代码改编自<a href="https://developer.mozilla.org/en-US/docs/WebAssembly/Understanding_the_text_format#webassembly_memory">WebAssembly Memory</a>）：</p>
+<pre><code class="language-html">&lt;!doctype html&gt;
+&lt;html&gt;
+  &lt;head&gt;
+    &lt;meta charset=&quot;utf-8&quot;&gt;
+    &lt;title&gt;WASM Test&lt;/title&gt;
+  &lt;/head&gt;
+
+  &lt;body&gt;
+    &lt;script&gt;
+      const memory = new WebAssembly.Memory({ initial: 1 });
+      const importObject = {
+        outer: {
+            log: (index, length) =&gt; {
+                const bytes = new Uint8Array(memory.buffer, index, length);
+                const string = new TextDecoder(&quot;utf8&quot;).decode(bytes);
+                console.log(string);
+            },
+            memory: memory
+        }
+      };
+      WebAssembly.instantiateStreaming(fetch(&quot;./string_in_wasm.wasm&quot;), importObject)
+        .then(obj =&gt; {
+            obj.instance.exports.output_inside_string();
+        });
+    &lt;/script&gt;
+  &lt;/body&gt;
+&lt;/html&gt;
+</code></pre>
+<p>这段代码是什么意思呢？</p>
+<p>在WASM中，我们定义了内存中的一个字符串“关注希月萌奈喵”（这串中文字符串的长度为21字节）。随后，我们需要导入一个<code>log</code>函数。这个函数接受两个<code>i32</code>类型的参数，其实现位于我们的JavaScript代码中。从代码中我们可以了解到，这段代码可以从WASM的内存中，<code>index</code>开始，读取<code>length</code>长度个字节，然后将其解码为UTF8字符串，然后输出。因此，我们在WASM中调用这段代码，并传入参数0和21。当我们测试这段程序时，我们可以发现，在控制台上，真的输出了：</p>
+<p>「关注希月萌奈喵」</p>
+<p>这串字符串。</p>
+<p>值得注意的是，这里我们采用JavaScript作为示例代码，是因为Rust中会有一些麻烦。敏感的开发者一定已经注意到了，在JavaScript代码中，<code>memory</code>这个变量，如果转成Rust会有些麻烦。因为这个变量在作为导入函数传给store时，所有权已经给store了，但是<code>log</code>还引用了这个变量，十分难搞。在wasmer中，我们需要使用<code>FunctionEnv</code>等方法来处理这件事，具体可以看官方文档<a href="https://github.com/wasmerio/wasmer/blob/master/docs/migration_to_3.0.0.md#after"><code>WasmerEnv</code> is removed in favor of <code>FunctionEnv</code></a>。</p>
+<h2 id="函数指针"><a class="header" href="#函数指针">函数指针</a></h2>
+<p>几乎所有的和内存相关的问题都解决了，但是，「函数指针」怎么解决？？？</p>
+<p>我们知道，在C、Rust等高级语言中，一定会存在「函数指针」。也就是说，我们要调用的函数具体是哪个，需要在运行时决定。在底层实现中，往往是由「间接调用」来解决，也就是将目标函数的地址存储在寄存器中，跳转时读取寄存器的值作为调用目标。</p>
+<p>但是在WASM中，对函数的调用指令<code>call</code>的操作数不是地址，而是一个编号，也就是例如我们之前的<code>call $log</code>，这里<code>$log</code>并不是一个真正的数字类型，它只是一个函数编号而已。第二个问题，我们存储在WASM内存中的值，只能是数字类型，因此内存中也没法存储函数的地址。这咋办捏？</p>
+<p>WASM引入了table机制（代码改编自<a href="https://developer.mozilla.org/en-US/docs/WebAssembly/Understanding_the_text_format#webassembly_tables">WebAssembly Tables</a>）：</p>
+<pre><code class="language-wasm">(module
+    (table 2 funcref)
+    (elem (i32.const 0) $home $birth)
+    (func $home (result i32)
+        i32.const 323
+    )
+    (func $birth (result i32)
+        i32.const 1219
+    )
+    (type $func_t (func (result i32))
+    (func $call_by_index (param $func_index $i32) (result i32)
+        (call_indirect (local.get $func_index) (type $func_t))
+    )
+)
+</code></pre>
+<p>这段代码实现了啥功能呢？用C语言来看，可以粗略看成：</p>
+<pre><code class="language-c">int home(void) { return 323; }
+int birth(void) { return 1219; }
+
+typedef int(*func_t)(void);
+func_t my_func_table[2] = { home, birth };
+
+int call_by_index(int func_index) {
+    return (my_func_table[func_index])();
+}
+</code></pre>
+<p>WASM的<code>table</code>语句，类似之前的<code>memory</code>，定义了一个元素个数为2的表。随后，我们通过<code>elem</code>语句，类似之前的<code>data</code>语句，声明了这个表的内容，其两个元素分别是我们定义的<code>$home</code>和<code>$birth</code>。</p>
+<p>在调用时，我们需要专门使用<code>call_indirect</code>指令。这个指令的第一个参数就是目标函数在这个表中的位置，第二个参数，则是目标函数的类型。</p>
+<p>通过这种方式，WASM可以有效避免一般的控制流劫持技术，也就是攻击者想将函数跳转的地址指向攻击者自己编写的函数。而这里，<code>call_indirect</code>指令，必须跳转到事先已经写在<code>table</code>中的函数，并且类型还必须一致。</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="08-导入与导出.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next" href="10-WASI.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="08-导入与导出.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next" href="10-WASI.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="elasticlunr.min.js"></script>
+        <script src="mark.min.js"></script>
+        <script src="searcher.js"></script>
+
+        <script src="clipboard.min.js"></script>
+        <script src="highlight.js"></script>
+        <script src="book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+    </body>
+</html>

@@ -1,0 +1,313 @@
+<!DOCTYPE HTML>
+<html lang="zh-Hans" class="sidebar-visible no-js light">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>导入与导出 - WASM 汇编入门教程</title>
+
+
+        <!-- Custom HTML head -->
+        
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff" />
+
+        <link rel="icon" href="favicon.svg">
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="highlight.css">
+        <link rel="stylesheet" href="tomorrow-night.css">
+        <link rel="stylesheet" href="ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+        <!-- MathJax -->
+        <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    </head>
+    <body>
+        <!-- Provide site root to javascript -->
+        <script>
+            var path_to_root = "";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "light";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            var html = document.querySelector('html');
+            html.classList.remove('no-js')
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add('js');
+        </script>
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            var html = document.querySelector('html');
+            var sidebar = 'hidden';
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            }
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <div class="sidebar-scrollbox">
+                <ol class="chapter"><li class="chapter-item expanded affix "><a href="index.html">引言</a></li><li class="chapter-item expanded "><a href="01-Helloworld.html"><strong aria-hidden="true">1.</strong> Hello world</a></li><li class="chapter-item expanded "><a href="02-基础概念与工具链.html"><strong aria-hidden="true">2.</strong> 基础概念与工具链</a></li><li class="chapter-item expanded "><a href="03-WASM的生成.html"><strong aria-hidden="true">3.</strong> WASM的生成</a></li><li class="chapter-item expanded "><a href="04-WASM的使用.html"><strong aria-hidden="true">4.</strong> WASM的使用</a></li><li class="chapter-item expanded "><a href="05-基本语法.html"><strong aria-hidden="true">5.</strong> 基本语法</a></li><li class="chapter-item expanded "><a href="06-变量与常量.html"><strong aria-hidden="true">6.</strong> 变量与常量</a></li><li class="chapter-item expanded "><a href="07-控制语句与基本块.html"><strong aria-hidden="true">7.</strong> 控制语句与基本块</a></li><li class="chapter-item expanded "><a href="08-导入与导出.html" class="active"><strong aria-hidden="true">8.</strong> 导入与导出</a></li><li class="chapter-item expanded "><a href="09-内存与引用.html"><strong aria-hidden="true">9.</strong> 内存与引用</a></li><li class="chapter-item expanded "><a href="10-WASI.html"><strong aria-hidden="true">10.</strong> WASI</a></li></ol>
+            </div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky bordered">
+                    <div class="left-buttons">
+                        <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </button>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">WASM 汇编入门教程</h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/Evian-Zhang/wasm-tutorial" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="导入与导出"><a class="header" href="#导入与导出">导入与导出</a></h1>
+<p>在熟悉了WASM的基本语法之后，我们会发现，正如最开始所说，WASM的核心还是对各种数的计算，而缺少与系统的交互，主要功能是做一些计算密集型的操作，也就是提供一些例如加密、哈希等操作。那么，WASM究竟怎样才能与外界系统交互呢？从这一章开始，我们就要讨论这个问题。在这一章中，我们讨论的第一个方法是导入（Import）与导出（Export）。</p>
+<p>在WASM中，导入与导出非常的简单，我们直接以一个例子来说明。我们创建<code>common.wat</code>并写入以下代码：</p>
+<pre><code class="language-wasm">(module
+    (import &quot;outer&quot; &quot;log_number&quot; (func $log_number (param i32)))
+    (import &quot;outer&quot; &quot;instability&quot; (global $instability i32))
+
+    (func $peek0 (param i32) (result i32 i32)
+        local.get 0
+        local.get 0
+    )
+
+    (func (export &quot;wasm_mul&quot;) (param $left i32) (param $right i32) (result i32)
+        (i32.add
+            (i32.mul (local.get $left) (local.get $right))
+            (global.get $instability)
+        )
+        call $peek0
+        call $log_number
+    )
+)
+</code></pre>
+<p>这段程序想要实现的是一个脑子多少有点问题的计算器，它可以用来计算乘法，但算出来的结果总会有些偏移。</p>
+<p>我们首先看到的是两个<code>import</code>语句，这个语句就是WASM中的「导入」。<code>import</code>后跟着两个字符串，例如&quot;outer&quot;和&quot;log_number&quot;，这个的意思是导入outer模块的<code>log_number</code>函数。关于这里的模块怎么用，我们后面会提到。紧接着这两个字符串，就声明了这个导入的类型，这里是一个接受一个<code>i32</code>类型参数的函数<code>$log_number</code>，而下一个<code>import</code>则导入的是一个<code>i32</code>类型的全局变量<code>$instability</code>。</p>
+<p>而导出，则是我们之前已经用了很多次的<code>export</code>语句。在这段程序里，我们导出了一个名叫<code>wasm_mul</code>的函数。其实现为，将输入的两个数相乘，然后加上之前导入的偏移值全局变量<code>$instability</code>，调用导入的函数<code>$log_number</code>作个日志输出，然后返回。</p>
+<p>从上面的描述可以知道，我们的WASM程序终于有了主动输出的能力了，虽然这个能力是导入的，但终究还是能自己控制的。</p>
+<h2 id="导入与导出的使用"><a class="header" href="#导入与导出的使用">导入与导出的使用</a></h2>
+<p>说了这么多，我们来看看使用效果。</p>
+<h3 id="在rust中使用wasmer库"><a class="header" href="#在rust中使用wasmer库">在Rust中使用wasmer库</a></h3>
+<p>与之前使用wasmer来调用<code>adder.wasm</code>十分类似，我们来看看这次的代码是怎么写的：</p>
+<pre><code class="language-rust  ignore">let wasm_bytes = fs::read(&quot;./common.wasm&quot;)?;
+let mut store = Store::default();
+let module = Module::new(&amp;store, wasm_bytes)?;
+let imports = imports! {
+    &quot;outer&quot; =&gt; {
+        &quot;log_number&quot; =&gt;
+            Function::new_typed(
+                &amp;mut store,
+                |number: i32| println!(&quot;In WASM, we got {number}&quot;)
+            ),
+        &quot;instability&quot; =&gt; Global::new(&amp;mut store, Value::I32(-5)),
+    }
+};
+let instance = Instance::new(&amp;mut store, &amp;module, &amp;imports)?;
+let wasm_mul: TypedFunction&lt;(u32, u32), u32&gt; = instance
+    .exports
+    .get_typed_function(&amp;mut store, &quot;wasm_mul&quot;)?;
+println!(&quot;Calculating 5 x 8 with instability -5 ...&quot;);
+let prod = wasm_mul.call(&amp;mut store, 5, 8)?;
+println!(&quot;From outside, we got {prod}&quot;);</code></pre>
+<p>运行这段程序，我们可以看到输出：</p>
+<pre><code class="language-plaintext">Calculating 5 x 8 with instability -5 ...
+In WASM, we got 35
+From outside, we got 35
+</code></pre>
+<p>可以看到，我们之前写的WASM程序确实像我们说的一样，想计算5乘8的结果，但是脑子出了点问题，算出来的结果是五八三十五。特别值得注意的是&quot;In WASM, we got 35&quot;，这段话是在WASM执行的过程中输出的！说明我们的WASM程序，确实通过导入函数的方法，实现了与系统的交互。</p>
+<p>具体到wasmer的API中来看，我们与之前和调用<code>adder.wasm</code>的程序作对比，会发现，这里主要是新增了<code>imports</code>的相关语句。wasmer提供了<code>imports!</code>宏，我们在这个宏中，首先声明了第一层的&quot;outer&quot;，这对应了我们在WASM的导入中第一个字符串，然后分别定义了<code>log_number</code>函数和<code>instability</code>全局变量，其定义方法非常直观。随后，在<code>Instance</code>实例创建的过程中传入这个对象，就可以将Rust中的函数、数据传入WASM中。</p>
+<h3 id="在rust中使用wasmtime库"><a class="header" href="#在rust中使用wasmtime库">在Rust中使用wasmtime库</a></h3>
+<p>与之前类似，我们来看看如何使用wasmtime库来建立导入导出：</p>
+<pre><code class="language-rust  ignore">let wasm_bytes = fs::read(&quot;./common.wasm&quot;)?;
+let engine = Engine::default();
+let mut store = Store::new(&amp;engine, ());
+let module = Module::new(&amp;engine, wasm_bytes)?;
+let log_number = Func::wrap(&amp;mut store, |number: i32| {
+    println!(&quot;In WASM, we got {number}&quot;);
+});
+let instability = Global::new(
+    &amp;mut store,
+    GlobalType::new(ValType::I32, Mutability::Const),
+    (-5i32).into(),
+)?;
+let instance = Instance::new(
+    &amp;mut store,
+    &amp;module,
+    &amp;[log_number.into(), instability.into()],
+)?;
+let wasm_mul = instance.get_typed_func::&lt;(u32, u32), u32&gt;(&amp;mut store, &quot;wasm_mul&quot;)?;
+println!(&quot;Calculating 5 x 8 with instability -5 ...&quot;);
+let prod = wasm_mul.call(&amp;mut store, (5, 8))?;
+println!(&quot;From outside, we got {prod}&quot;);</code></pre>
+<p>可以看到，我们也是创建了<code>log_number</code>和<code>instability</code>这两个用于传递的对象，随后在创建<code>Instance</code>实例的过程中传入，即可将Rust中的函数与数据传入WASM。</p>
+<h3 id="在web中"><a class="header" href="#在web中">在Web中</a></h3>
+<pre><code class="language-html">&lt;!doctype html&gt;
+&lt;html&gt;
+  &lt;head&gt;
+    &lt;meta charset=&quot;utf-8&quot;&gt;
+    &lt;title&gt;WASM Test&lt;/title&gt;
+  &lt;/head&gt;
+
+  &lt;body&gt;
+    &lt;script&gt;
+      const importObject = {
+        outer: {
+            log_number: (number) =&gt; console.log(`In WASM, we got ${number}`),
+            instability: new WebAssembly.Global({ value: &quot;i32&quot;, mutable: false }, -5)
+        }
+      };
+      WebAssembly.instantiateStreaming(fetch(&quot;./common.wasm&quot;), importObject)
+        .then(obj =&gt; {
+            console.log('Calculating 5 x 8 with instability -5 ...');
+            const prod = obj.instance.exports.wasm_mul(5, 8);
+            console.log(`From outside, we got ${prod}`);
+        });
+    &lt;/script&gt;
+  &lt;/body&gt;
+&lt;/html&gt;
+</code></pre>
+<p>在Web中使用WASM的导入和导出，只需要在<code>instantiateSteaming</code>函数中提供第二个参数<code>importObject</code>即可。这个参数的创建也很清楚，这里不再赘述。</p>
+<p>值得一提的是，如果我们想使用ES Module的方案，也就是目前利用webpack来做<code>import { wasm_mul } from './common.wasm'</code>，则并不是那么容易，需要修改WASM中的代码，具体可以看<a href="https://github.com/WebAssembly/esm-integration/blob/main/proposals/esm-integration/EXAMPLES.md">ES Module Integration Proposal的示例</a>。</p>
+<h2 id="类型转换"><a class="header" href="#类型转换">类型转换</a></h2>
+<p>上述讲了若干种高级编程语言与WASM程序通过导入与导出来交互的例子，有一个问题我们需要注意：类型转换。无论在Rust还是JavaScript中，我们都有若干种类型，例如Rust的<code>bool</code>、<code>usize</code>，抑或是JavaScript的<code>number</code>等等，以及各种用户自定义类型。而WASM中，我们只有<code>i32</code>、<code>i64</code>、<code>f32</code>、<code>f64</code>这几个基本的数字类型，那我们在调用接口的过程中，究竟是怎样做类型转换的呢？</p>
+<p>在本章中，我们将集中关注高级编程语言的基本数字类型与WASM的数字类型的转换，而对于自定义类型、结构体、数组等，我们将在之后关注。</p>
+<p>对于C/C++和Rust而言，目前遵循的是<a href="https://github.com/WebAssembly/tool-conventions/blob/main/BasicCABI.md">BasicCABI</a>，其中值得注意的是，将所有小于8字节的整型（例如<code>bool</code>、<code>u8</code>、<code>u16</code>、<code>u32</code>）均转化为WASM中的<code>i32</code>，而8字节整型（Rust中的<code>u64</code>，C中的<code>unsigned long long</code>）转化为WASM中的<code>i64</code>。</p>
+<p>而WASM类型与JavaScript中类型的互相转化则遵循<a href="https://webassembly.github.io/spec/js-api/index.html#tojsvalue">ToJSValue</a>和<a href="https://webassembly.github.io/spec/js-api/index.html#towebassemblyvalue">ToWebAssemblyValue</a>。</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="07-控制语句与基本块.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next" href="09-内存与引用.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="07-控制语句与基本块.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next" href="09-内存与引用.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="elasticlunr.min.js"></script>
+        <script src="mark.min.js"></script>
+        <script src="searcher.js"></script>
+
+        <script src="clipboard.min.js"></script>
+        <script src="highlight.js"></script>
+        <script src="book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+    </body>
+</html>

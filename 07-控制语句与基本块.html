@@ -1,0 +1,396 @@
+<!DOCTYPE HTML>
+<html lang="zh-Hans" class="sidebar-visible no-js light">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>控制语句与基本块 - WASM 汇编入门教程</title>
+
+
+        <!-- Custom HTML head -->
+        
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff" />
+
+        <link rel="icon" href="favicon.svg">
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="highlight.css">
+        <link rel="stylesheet" href="tomorrow-night.css">
+        <link rel="stylesheet" href="ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+        <!-- MathJax -->
+        <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    </head>
+    <body>
+        <!-- Provide site root to javascript -->
+        <script>
+            var path_to_root = "";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "light";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            var html = document.querySelector('html');
+            html.classList.remove('no-js')
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add('js');
+        </script>
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            var html = document.querySelector('html');
+            var sidebar = 'hidden';
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            }
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <div class="sidebar-scrollbox">
+                <ol class="chapter"><li class="chapter-item expanded affix "><a href="index.html">引言</a></li><li class="chapter-item expanded "><a href="01-Helloworld.html"><strong aria-hidden="true">1.</strong> Hello world</a></li><li class="chapter-item expanded "><a href="02-基础概念与工具链.html"><strong aria-hidden="true">2.</strong> 基础概念与工具链</a></li><li class="chapter-item expanded "><a href="03-WASM的生成.html"><strong aria-hidden="true">3.</strong> WASM的生成</a></li><li class="chapter-item expanded "><a href="04-WASM的使用.html"><strong aria-hidden="true">4.</strong> WASM的使用</a></li><li class="chapter-item expanded "><a href="05-基本语法.html"><strong aria-hidden="true">5.</strong> 基本语法</a></li><li class="chapter-item expanded "><a href="06-变量与常量.html"><strong aria-hidden="true">6.</strong> 变量与常量</a></li><li class="chapter-item expanded "><a href="07-控制语句与基本块.html" class="active"><strong aria-hidden="true">7.</strong> 控制语句与基本块</a></li><li class="chapter-item expanded "><a href="08-导入与导出.html"><strong aria-hidden="true">8.</strong> 导入与导出</a></li><li class="chapter-item expanded "><a href="09-内存与引用.html"><strong aria-hidden="true">9.</strong> 内存与引用</a></li><li class="chapter-item expanded "><a href="10-WASI.html"><strong aria-hidden="true">10.</strong> WASI</a></li></ol>
+            </div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky bordered">
+                    <div class="left-buttons">
+                        <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </button>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">WASM 汇编入门教程</h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/Evian-Zhang/wasm-tutorial" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="控制语句与基本块"><a class="header" href="#控制语句与基本块">控制语句与基本块</a></h1>
+<p>之前的几章中，我们反复提到WASM的局部变量机制与栈机、寄存器机的特性，其中我们指出，早期WASM的基本块语法设计导致局部变量的使用，但后来已经解决。在这一章里，我们将介绍在编程中不可或缺的元素——控制语句，并且用实际的例子，给大家分析基本块与寄存器机、栈机。</p>
+<h2 id="函数调用"><a class="header" href="#函数调用">函数调用</a></h2>
+<p>首先，我们来讲讲函数调用，从某种意义上，它也是一种控制语句。在WASM中，我们可以使用<code>call</code>语句进行函数调用。它与我们在高级语言中常见的函数调用几乎没有区别，唯一要注意的就是对于栈的控制。举一个实际的例子，我们会更好理解：</p>
+<pre><code class="language-wasm">(module
+    (func $foo (param i32 i32) (result i32 i32 i32)
+        ;; Do something...
+    )
+    (func $bar
+        i32.const 1
+        i32.const 1
+        call $foo
+        ;; Here we got three elements on the stack
+    )
+)
+</code></pre>
+<p>我们定义了一个接受两个参数，返回三个值的函数<code>$foo</code>（函数返回多个值的提案<a href="https://github.com/WebAssembly/spec/blob/master/proposals/multi-value/Overview.md">Multi-value proposal</a>已经成为标准化特性而被广泛实现了），当我们在函数<code>$bar</code>中调用<code>$foo</code>函数时，首先得确保栈上已经有两个元素了。在调用<code>$foo</code>之后，栈上的两个元素被这个函数消耗掉了（也就是弹栈走了），然后<code>$foo</code>返回了三个值，都存储在栈上，所以此时栈上有三个元素。</p>
+<p>此外，值得一提，函数调用指令也适用我们之前提到的语法糖，也就是：</p>
+<pre><code class="language-wasm">(func $bar
+    (call $foo (i32.const 1) (i32.const 1))
+    ;; Here we got three elements on the stack
+)
+</code></pre>
+<p>在了解了函数调用的栈性质之后，我们其实可以<strong>模拟</strong>出之前提到的peek和poke了：</p>
+<pre><code class="language-wasm">(module
+    (func $peek0 (param i32) (result i32 i32)
+        local.get 0
+        local.get 0
+    )
+
+    (func $peek1 (param i32 i32) (result i32 i32 i32)
+        local.get 0
+        local.get 1
+        local.get 0
+    )
+)
+</code></pre>
+<p><code>$peek0</code>函数做的事是将距离栈顶0个元素（也就是栈顶元素）复制并压栈，而<code>peek1</code>则是将距离栈顶为1的元素复制并压栈。</p>
+<h2 id="选择语句"><a class="header" href="#选择语句">选择语句</a></h2>
+<p>熟悉底层汇编的开发者一定了解，对于我们在高级语言中常见的选择语句<code>if</code>...<code>else</code>，在大部分的汇编架构中，其往往是实现成针对特定flag的标签跳转。但在WASM中，实际上提供了更高层面的抽象，也就是接近高级语言的<code>if</code>...<code>else</code>...<code>end</code>语句，即：</p>
+<pre><code class="language-wasm">if
+    ;; True branch
+else
+    ;; False branch
+end
+</code></pre>
+<p>在执行这个结构时，会从栈上将栈顶元素弹栈，若其为0，则执行False分支，否则执行True分支，非常符合直觉。</p>
+<p>我们在高级语言中使用选择语句的时候，往往是通过比大小来判断执行哪个分支，其本质上就是将大小转变为布尔值，然后根据布尔值来做判断。在WASM中，也提供了一系列将大小转变为布尔值的指令，例如</p>
+<pre><code class="language-wasm">i32.const 1219
+i32.const 323
+i32.ge_u
+</code></pre>
+<p>上述程序将得到1。其意思是，<code>i32.ge_u</code>的<code>ge</code>代表大于等于（greater than or equal to），而<code>u</code>代表将两个操作数看做无符号整数（之前我们提过，WASM的整数的有无符号是根据指令来决定的）。类似地，我们一共有<code>ge</code>、<code>gt</code>、<code>lt</code>、<code>le</code>、<code>eq</code>、<code>ne</code>等大小比较，与<code>s</code>、<code>u</code>的组合。</p>
+<p>在了解了函数调用与选择语句之后，我们就可以实现一个简单的递归形式的阶乘函数了：</p>
+<pre><code class="language-wasm">(func $factorial_recur (param $input i32) (result i32)
+    (i32.le_u (local.get $input) (i32.const 1))
+    if
+        i32.const 1
+        return
+    end
+    (i32.mul
+        (local.get $input)
+        (call $factorial_recur (i32.sub (local.get $input) (i32.const 1)))
+    )
+)
+</code></pre>
+<p>上述代码非常简洁清楚，如果不明白，我们可以用类似的C语言来帮助理解：</p>
+<pre><code class="language-c">unsigned int factorial_recur(unsigned int input) {
+    if (input &lt;= 1) {
+        return 1;
+    }
+    return input * factorial_recur(input - 1);
+}
+</code></pre>
+<h2 id="基本块与跳转"><a class="header" href="#基本块与跳转">基本块与跳转</a></h2>
+<p>除了选择语句以外，我们常见的循环语句，在底层往往需要通过跳转来实现。在WASN中，循环语句的跳转往往与基本块相绑定。</p>
+<p>具体而言，WASM中的跳转包括<code>br</code>和<code>br_if</code>，前者相当于底层汇编指令中的无条件跳转，例如AMD64中的<code>jmp</code>，而<code>br_if</code>则是有条件跳转，其工作方式与WASM中的<code>if</code>类似，消耗掉栈顶的一个值，判断其是否为true，如果为true则跳转。这两者使用起来很类似，所以接下来就以<code>br_if</code>为例。</p>
+<p>在WASM中，如果需要使用这类跳转，往往必须在一个基本块<code>block</code>或者<code>loop</code>中，具体而言，是这样的一个结构：</p>
+<pre><code class="language-wasm">(func
+    ;; Do something
+    block $my_block
+        ;; Do something inside this block
+        br_if $my_block
+        ;; Do something else
+    end
+    ;; ...
+    loop $my_loop
+        ;; Do something inside this loop
+        br_if $my_loop
+        ;; Do something else
+    end
+)
+</code></pre>
+<p>我们通过<code>block</code>和<code>loop</code>可以附带一个标识符，然后在<code>br</code>或者<code>br_if</code>的指令中，操作数就是相应的标识符，也就是<code>br_if $my_block</code>和<code>br_if $my_loop</code>。</p>
+<p>这两者有什么区别呢？很简单，<code>br</code>以及<code>br_if</code>，在<code>block</code>中将跳转到<code>block</code>之后的指令，而在<code>loop</code>中则会跳转到<code>loop</code>开头的第一条指令。我们可以近似地理解成，在<code>block</code>中充当了C语言中<code>break</code>的作用，而在<code>loop</code>中充当了C语言<code>continue</code>的作用。并且一点很重要的是，<code>block</code>和<code>loop</code>本身并不是循环，也就是说，<strong>如果内部没有<code>br</code>或者<code>br_if</code>，则执行完这个基本块就不会重复执行，而是接下来执行下一条指令</strong>。</p>
+<h3 id="基本块的参数和返回值"><a class="header" href="#基本块的参数和返回值">基本块的参数和返回值</a></h3>
+<p>WASM中的<code>block</code>和<code>loop</code>可以拥有返回值，而<a href="https://github.com/WebAssembly/spec/blob/master/proposals/multi-value/Overview.md">Multi-value proposal</a>这个提案则让基本块可以拥有参数。由于这个提案已经被广泛地实现，所以接下来，我们就介绍一下，<code>block</code>和<code>loop</code>的参数及返回值相关特性。</p>
+<p>简单来说，我们可以像定义函数一样，给基本块定义参数和返回值，如：</p>
+<pre><code class="language-wasm">(func $my_func
+    i32.const 1
+    i32.const 2
+    block $my_block (param i32 i32) (result i32)
+        ;; ...
+    end
+)
+</code></pre>
+<p>在这里，我们定义了一个接受两个<code>i32</code>参数，返回一个<code>i32</code>的基本块<code>$my_block</code>。但是，这里的语义实际上是与函数不太一样的，参数并不可以看做一个局部变量，而是需要用栈机的视角去看待。</p>
+<p>我们可以粗略地理解成，<code>$my_block</code>这个基本块也有一个栈，这个栈位于<code>$my_func</code>的栈内。当我们进入这个基本块之前，函数栈上已经有了1和2这两个元素。当我们进入这个基本块时，1和2这两个元素就<strong>归属</strong>于基本块的栈了，也就是说，在基本块的开头，栈上就有了两个元素1和2。</p>
+<p>由于我们声明这个基本块需要返回1个元素，因此当这个基本块结束时，这个基本块的栈上应该只剩1个元素，并且返回后，这1个元素就<strong>归属</strong>回函数栈，并且之前的元素1和2，由于归属在基本块，所以可以供其操作，把栈上的元素从开头的两个，变成最终只剩一个。</p>
+<p>换句话说，如果这个函数在进入基本块前，栈上已经有了3个元素，而我们的基本块接受2个参数，那么基本块是没有办法访问函数栈的第一个元素，只能访问后两个元素；类似地，基本块结束时，也必须保证栈上元素的数量等于其返回的值的数量。</p>
+<p>这看上去似乎很复杂，那我们就通过两个例子来学习一下。</p>
+<h4 id="寄存器机形式的阶乘函数"><a class="header" href="#寄存器机形式的阶乘函数">寄存器机形式的阶乘函数</a></h4>
+<p>首先，我们来看一下在WASM中，以迭代方式实现的阶乘函数。</p>
+<pre><code class="language-wasm">(func $factorial_iter_register (param $input i32) (result i32)
+    (local $prod i32)
+    (local.set $prod (i32.const 1))
+    loop $main_loop (result i32)
+        (i32.le_u (local.get $input) (i32.const 1))
+        if
+            local.get $prod
+            return
+        end
+        (local.set $prod
+            (i32.mul (local.get $input) (local.get $prod))
+        )
+        (local.set $input (i32.sub (local.get $input) (i32.const 1)))
+        br $main_loop
+    end
+)
+</code></pre>
+<p>这个例子看上去不算难以理解，其可粗略地看做下面的C程序：</p>
+<pre><code class="language-c">unsigned int factorial_iter_register(unsigned int input) {
+    unsigned int prod = 1;
+    while (1) {
+        if (input &lt;= 1) {
+            return prod;
+        }
+        prod = input * prod;
+        input = input - 1;
+    }
+}
+</code></pre>
+<p>在这个例子中，有两点值得注意。</p>
+<p>首先，这个例子中的基本块<code>$main_loop</code>较为简单，没有参数，所以容易理解一些。由于其返回一个<code>i32</code>类型的值，因此在这个基本块结束的时候，必须要求其栈上只剩1个值。在这里，我们通过<code>return</code>指令巧妙地保证了这一点。</p>
+<p>其次，这个例子大量使用了局部变量用于存储临时值，因此是以寄存器机的形式来实现的这一功能。</p>
+<h4 id="栈机形式的阶乘函数"><a class="header" href="#栈机形式的阶乘函数">栈机形式的阶乘函数</a></h4>
+<p>事实上，在基本块可以接受参数之后，我们就可以用纯栈机的形式实现阶乘函数了，不过需要借助我们之前模拟实现的<code>$peek0</code>和<code>$peek1</code>（这段代码改编自<a href="https://github.com/WebAssembly/spec/blob/master/proposals/multi-value/Overview.md">Multi-value proposal</a>中的官方示例）：</p>
+<pre><code class="language-wasm">(func $factorial_iter_stack (param $input i32) (result i32)
+    i32.const 1
+    local.get $input
+    loop $main_loop (param i32 i32) (result i32)
+        call $peek1
+        call $peek1
+        i32.mul
+        call $peek1
+        i32.const 1
+        i32.sub
+        call $peek0
+        i32.const 1
+        i32.gt_u
+        br_if $main_loop
+        call $peek1
+        return
+    end
+)
+</code></pre>
+<p>这一段代码乍看很难理解，那么，为了方便理解，我们不妨举一个例子。当<code>$input</code>为3时，我们来看看，这个函数的栈究竟是如何变化的：</p>
+<pre><code class="language-plaintext">[i32.const 1]          1
+[local.get $input]     1  3
+[INSIDE $main_loop]    1  3
+[call $peek1]          1  3  1
+[call $peek1]          1  3  1  3
+[i32.mul]              1  3  3
+[call $peek1]          1  3  3  3
+[i32.const 1]          1  3  3  3  1
+[i32.sub]              1  3  3  2
+[call $peek0]          1  3  3  2  2
+[i32.const 1]          1  3  3  2  2  1
+[i32.gt_u]             1  3  3  2  1
+[br_if $main_loop YES] 3  2
+[INSIDE $main_loop]    3  2
+[call $peek1]          3  2  3
+[call $peek1]          3  2  3  2
+[i32.mul]              3  2  6
+[call $peek1]          3  2  6  2
+[i32.const 1]          3  2  6  2  1
+[i32.sub]              3  2  6  1
+[call $peek0]          3  2  6  1  1
+[i32.const 1]          3  2  6  1  1  1
+[i32.gt_u]             3  2  6  1  0
+[br_if $main_loop NO]  3  2  6  1
+[call $peek1]          3  2  6  1  6
+[return]               6
+</code></pre>
+<p>可以看到，在最终<code>return</code>的时候，返回的值是6，确实计算成功了3的阶乘。</p>
+<p>这里有几点需要注意的。在第一次进入<code>$main_loop</code>的时候（第三行），由于这个基本块接受两个参数，因此此时栈上的1和3就归属于了<code>$main_loop</code>这个基本块，从而之后的<code>$peek1</code>操作，才能访问这两个元素。</p>
+<p>在第一次条件跳转<code>br_if $main_loop</code>时，首先消耗掉栈顶的值，也就是1，这个值是刚刚<code>i32.gt_u</code>得到的比较结果。由于其为1，所以需要跳转到这个loop的开头。同时，<code>br</code>和<code>br_if</code>的语义要求，将此时基本块栈上的值只保留基本块参数个数。简单来说，由于<code>$main_loop</code>接受两个参数，而在消耗掉栈顶的1后，栈上还有四个值（1, 3, 3, 2），因此3和2会被作为下一次循环时，这个基本块的参数，而剩下的1和3就被抛弃了，所以此时栈上就只剩下3和2了。</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="06-变量与常量.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next" href="08-导入与导出.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="06-变量与常量.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next" href="08-导入与导出.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="elasticlunr.min.js"></script>
+        <script src="mark.min.js"></script>
+        <script src="searcher.js"></script>
+
+        <script src="clipboard.min.js"></script>
+        <script src="highlight.js"></script>
+        <script src="book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+    </body>
+</html>

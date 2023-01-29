@@ -1,0 +1,261 @@
+<!DOCTYPE HTML>
+<html lang="zh-Hans" class="sidebar-visible no-js light">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>基础概念与工具链 - WASM 汇编入门教程</title>
+
+
+        <!-- Custom HTML head -->
+        
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff" />
+
+        <link rel="icon" href="favicon.svg">
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="highlight.css">
+        <link rel="stylesheet" href="tomorrow-night.css">
+        <link rel="stylesheet" href="ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+        <!-- MathJax -->
+        <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    </head>
+    <body>
+        <!-- Provide site root to javascript -->
+        <script>
+            var path_to_root = "";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "light";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            var html = document.querySelector('html');
+            html.classList.remove('no-js')
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add('js');
+        </script>
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            var html = document.querySelector('html');
+            var sidebar = 'hidden';
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            }
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <div class="sidebar-scrollbox">
+                <ol class="chapter"><li class="chapter-item expanded affix "><a href="index.html">引言</a></li><li class="chapter-item expanded "><a href="01-Helloworld.html"><strong aria-hidden="true">1.</strong> Hello world</a></li><li class="chapter-item expanded "><a href="02-基础概念与工具链.html" class="active"><strong aria-hidden="true">2.</strong> 基础概念与工具链</a></li><li class="chapter-item expanded "><a href="03-WASM的生成.html"><strong aria-hidden="true">3.</strong> WASM的生成</a></li><li class="chapter-item expanded "><a href="04-WASM的使用.html"><strong aria-hidden="true">4.</strong> WASM的使用</a></li><li class="chapter-item expanded "><a href="05-基本语法.html"><strong aria-hidden="true">5.</strong> 基本语法</a></li><li class="chapter-item expanded "><a href="06-变量与常量.html"><strong aria-hidden="true">6.</strong> 变量与常量</a></li><li class="chapter-item expanded "><a href="07-控制语句与基本块.html"><strong aria-hidden="true">7.</strong> 控制语句与基本块</a></li><li class="chapter-item expanded "><a href="08-导入与导出.html"><strong aria-hidden="true">8.</strong> 导入与导出</a></li><li class="chapter-item expanded "><a href="09-内存与引用.html"><strong aria-hidden="true">9.</strong> 内存与引用</a></li><li class="chapter-item expanded "><a href="10-WASI.html"><strong aria-hidden="true">10.</strong> WASI</a></li></ol>
+            </div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky bordered">
+                    <div class="left-buttons">
+                        <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </button>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">WASM 汇编入门教程</h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/Evian-Zhang/wasm-tutorial" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="基础概念与工具链"><a class="header" href="#基础概念与工具链">基础概念与工具链</a></h1>
+<p>要学习WASM，首先我们需要了解WASM的基础概念与工具链。</p>
+<h2 id="基础概念"><a class="header" href="#基础概念">基础概念</a></h2>
+<p>在了解WASM的语法之前，我们应该首先了解WASM的相关概念及工具链。因此，这里我们不会详细介绍WASM的语法，而是留在之后详细介绍。</p>
+<h3 id="wasm格式"><a class="header" href="#wasm格式">WASM格式</a></h3>
+<p>WASM本身的层级与JVM、LLVM IR类似，定义了一套指令集，与常用的编程语言不同，更加偏于底层一些。与LLVM IR类似，WASM也有二进制格式与文本格式。</p>
+<p>在Hello world一章中：</p>
+<ul>
+<li>我们手写的，以<code>.wat</code>结尾的，就是文本格式的WASM</li>
+<li>我们使用<code>wat2wasm</code>生成的，以<code>.wasm</code>结尾的，就是二进制格式的WASM。</li>
+</ul>
+<p>在我们生成一个WASM程序用于执行时，往往使用的二进制格式，以便执行器解析和减小传输体积。而在我们阅读以及手动书写时，往往会使用文本格式。</p>
+<h3 id="嵌入环境"><a class="header" href="#嵌入环境">嵌入环境</a></h3>
+<p>之前提到，WASM一大显著的特点，就是可以在各种环境下运行。例如，WASM可以在各大主流浏览器中运行，也可以当作库被Rust、C调用，也可以作为独立的程序在系统中运行。</p>
+<p>这决定了一个特性：WASM和C++、JavaScript语言一样，是一个标准与实现分离的语言。也就是说，WASM有一个类似于标准委员会的组织，制定了WASM的标准，而遵循这个标准的WASM程序可以在哪里运行，则是根据各个环境的实现决定的。比如说，Chrome的V8引擎实现了WASM的标准，而我们之前用到的wasmer、wasmtime也各实现了WASM的标准。</p>
+<p>对于WASM程序而言，不同的实现也就对应了不同的运行环境。在WASM概念中，会将这种环境称为嵌入环境（Embedder）。例如，WASM的V8引擎实现，将其嵌入到Chrome浏览器的Web环境中，而Linux上的wasmer实现，则是将WASM嵌入到Linux环境中。</p>
+<h3 id="提案"><a class="header" href="#提案">提案</a></h3>
+<p>标准与实现分离的一大好处，或者说一大根本原因，就是能够获得极广的支持度，WASM因此可以在各大主流浏览器以及操作系统中运行。但是，一个“臭名昭著”的“缺点”也随之而来：并不是所有标准都被实现了。熟悉C++的同学一定经历过，想要使用最新标准的语义，例如C++20的API，首先得看看主流的编译器（GCC、Clang、MSVC）是否支持。而使用JavaScript的前端开发者更是经常抱怨「Safari是新时代的IE」。</p>
+<p>WASM也不可避免地拥有这个问题，也就是不同WASM的实现对特性的支持度不同。与JavaScript类似，WASM也用了「提案」（Proposal）体系来缓解这个问题。粗略地来讲，WASM有一个核心规范，这个规范是所有的实现都遵循的。在这个规范的基础上，会有一些提案来增加新的功能。这些提案经过各方权衡以及讨论，最终又会进入新的标准之中。具体提案的实现情况可以看<a href="https://webassembly.org/roadmap/">Roadmap</a>。</p>
+<p>举个例子，目前WASM的内存最多只有4GB，可以看做一个32位的系统。<a href="https://github.com/WebAssembly/memory64/blob/main/proposals/memory64/Overview.md">Memory64</a>提案将内存扩展到了64位。顺带提一句，这也是为什么当我们在使用高级语言编译WASM的时候，声明的target triple是wasm32而不是wasm。目前，我们并不能直接在所有嵌入环境下都直接使用64位的内存，这也是实现对这一提案的支持度不同导致的。</p>
+<p>在这个系列中，我所讲的大部分主要功能，都是WASM的核心规范。如果有涉及到提案部分（也就是说不一定所有实现都支持）时，我会加以特殊说明。</p>
+<h3 id="wasi"><a class="header" href="#wasi">WASI</a></h3>
+<p>和WASM一个紧密相关的概念是WASI（WebAssembly System Interface）。这个概念十分重要，之后会有专门的章节介绍。但是，我们在学习WASM之前，还是有必要先对这个概念有一个认识。</p>
+<p>用汇编语言来类比，当我们使用汇编语言的时候，「指令集」给我们提供了许多基础指令，例如加减乘除、控制流转移等等。但是，我们如果仅仅用这些基础指令写程序，基本上是写不出一个「有状态」（Stateful）的程序的。例如，我们只能写出一个求和函数，给它输入是2和3，输出就一定是5，无论运行多少次都是这样的。但是，我们在真正写程序的过程中，往往是有状态的。例如创建一个文件，那么运行第二次，就会提示文件已存在，创建失败。在汇编语言中，这是使用「系统调用」（Syscall）来实现的。AMD64指令集的汇编程序通过执行<code>syscall</code>指令，通知处理器，处理器将执行流交给操作系统内核，操作系统内核执行相应的函数。</p>
+<p>对于WASM也一样，WASM提供的基础指令同样不能实现例如文件创建等高级功能。因此，WASI被提了出来。WASI实际上也是一个标准，其规范了一系列与系统相关的API，如文件读写等。而不同的嵌入环境下的不同实现可以选择性地实现这些接口。例如，在网页中，我们不能直接读写任意路径文件，因此当嵌入环境是网页时，WASM引擎将不会实现相应的接口。</p>
+<p>值得指出的是，WASM和WASI实际上是一种独立的关系。如果我们的程序不使用WASI提供的接口，那么对应的target triple实际上是wasm32-unknown-unknown。而如果我们的程序使用WASI提供的接口，则对应的是wasm32-wasi。</p>
+<p>另一个十分常见的与系统交互的情况，实际上是进程创建。当我们运行一个独立的可执行程序的时候，系统实际上会将命令行参数、环境变量等传递给程序，而在程序退出的时候，会将返回值传递回操作系统。这其实暗示了一个非常重要的事：事实上，我们所有独立运行的WASM程序（例如我们前一章中打印hello world的程序）都一定是使用了WASI的程序。</p>
+<p>由于WASI较为复杂，之后会有专门的章节介绍WASI，因此接下来的介绍将主要集中在不使用WASI的程序，也就是将WASM作为库使用的情况。</p>
+<h2 id="wasm基础工具链"><a class="header" href="#wasm基础工具链">WASM基础工具链</a></h2>
+<p>讲了这么多WASM的概念，我们可以来梳理一下，在我们一般的开发者进行软件开发的过程中，是如何使用WASM的呢？</p>
+<ol>
+<li>使用高级语言（Rust/C++等）编写代码</li>
+<li>使用特定的编译器，将代码编译成WASM程序</li>
+<li>在不同的嵌入环境中（如Web、特定操作系统等）使用WASM程序</li>
+</ol>
+<p>那么，在这一过程中，与WASM相关的基础工具有哪些呢？接下来，我们可以粗略地了解一下WASM涉及的基础工具链。而具体的如何生成WASM和如何使用WASM，将在之后的章节详细解释。</p>
+<h3 id="生成wasm程序"><a class="header" href="#生成wasm程序">生成WASM程序</a></h3>
+<p>我们常用的C/Rust，都是通过LLVM后端来生成WASM程序的。<a href="https://www.llvm.org">LLVM</a>是现在最主流的编译器后端之一，其通过LLVM IR中间语言，让编程语言的开发者只需要考虑编译器前端。关于LLVM IR，可以参考我写的<a href="https://github.com/Evian-Zhang/llvm-ir-tutorial">LLVM IR入门指南</a>。简单来说，对于C语言、Rust等编程语言，其编译器通过将代码变为AST，然后进行分析，最后生成LLVM IR。而LLVM后端则将LLVM IR生成到不同平台的可执行程序。</p>
+<h3 id="处理wasm程序"><a class="header" href="#处理wasm程序">处理WASM程序</a></h3>
+<p>我们在Hello world一章中，已经初次经历了wabt，一个用于处理WASM的工具链。wabt主要提供了以下几个工具：</p>
+<ul>
+<li>
+<p><code>wat2wasm</code></p>
+<p>将<code>.wat</code>的文本格式WASM转换为<code>.wasm</code>的二进制格式WASM</p>
+</li>
+<li>
+<p><code>wasm2wat</code></p>
+<p>将<code>.wasm</code>的二进制格式WASM转换为<code>.wat</code>的文本格式WASM</p>
+</li>
+<li>
+<p><code>wasm-objdump</code></p>
+<p>查看<code>.wasm</code>的二进制格式WASM中的信息。</p>
+</li>
+</ul>
+<p><code>wasm-objdump</code>与<code>wasm2wat</code>的区别就在于，前者可以更好地查看二进制格式中每个字节对应的哪条文本指令，并且也可以查看相应的元信息。</p>
+<p>此外，另一套工具链为<a href="https://github.com/WebAssembly/binaryen">binaryen</a>。wabt工具链在进行文本格式与二进制格式的转化的过程中，没有任何多余的步骤，采用一对一的直译；而binaryen工具链，定义了一整套binaryen IR，比WASM更为底层，来优化WASM程序。</p>
+<p>例如，binaryen工具链提供了<code>wasm-opt</code>工具，我们可以使用</p>
+<pre><code class="language-shell">wasm-opt a.wasm -o optimized.wasm -O3
+</code></pre>
+<p>将<code>a.wasm</code>优化，并输出<code>optimized.wasm</code>。</p>
+<h3 id="使用wasm程序"><a class="header" href="#使用wasm程序">使用WASM程序</a></h3>
+<p>当WASM程序在Web端使用时，不同的主流浏览器的引擎分别有实现。当我们将其作为一个库在C++/Rust程序中使用的时候，可以使用wasmer、wasmtime等工具作为库来使用。</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="01-Helloworld.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next" href="03-WASM的生成.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="01-Helloworld.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next" href="03-WASM的生成.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="elasticlunr.min.js"></script>
+        <script src="mark.min.js"></script>
+        <script src="searcher.js"></script>
+
+        <script src="clipboard.min.js"></script>
+        <script src="highlight.js"></script>
+        <script src="book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+    </body>
+</html>

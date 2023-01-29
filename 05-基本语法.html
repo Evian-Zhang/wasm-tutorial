@@ -1,0 +1,449 @@
+<!DOCTYPE HTML>
+<html lang="zh-Hans" class="sidebar-visible no-js light">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>基本语法 - WASM 汇编入门教程</title>
+
+
+        <!-- Custom HTML head -->
+        
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff" />
+
+        <link rel="icon" href="favicon.svg">
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="highlight.css">
+        <link rel="stylesheet" href="tomorrow-night.css">
+        <link rel="stylesheet" href="ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+        <!-- MathJax -->
+        <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    </head>
+    <body>
+        <!-- Provide site root to javascript -->
+        <script>
+            var path_to_root = "";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "light";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            var html = document.querySelector('html');
+            html.classList.remove('no-js')
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add('js');
+        </script>
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            var html = document.querySelector('html');
+            var sidebar = 'hidden';
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            }
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <div class="sidebar-scrollbox">
+                <ol class="chapter"><li class="chapter-item expanded affix "><a href="index.html">引言</a></li><li class="chapter-item expanded "><a href="01-Helloworld.html"><strong aria-hidden="true">1.</strong> Hello world</a></li><li class="chapter-item expanded "><a href="02-基础概念与工具链.html"><strong aria-hidden="true">2.</strong> 基础概念与工具链</a></li><li class="chapter-item expanded "><a href="03-WASM的生成.html"><strong aria-hidden="true">3.</strong> WASM的生成</a></li><li class="chapter-item expanded "><a href="04-WASM的使用.html"><strong aria-hidden="true">4.</strong> WASM的使用</a></li><li class="chapter-item expanded "><a href="05-基本语法.html" class="active"><strong aria-hidden="true">5.</strong> 基本语法</a></li><li class="chapter-item expanded "><a href="06-变量与常量.html"><strong aria-hidden="true">6.</strong> 变量与常量</a></li><li class="chapter-item expanded "><a href="07-控制语句与基本块.html"><strong aria-hidden="true">7.</strong> 控制语句与基本块</a></li><li class="chapter-item expanded "><a href="08-导入与导出.html"><strong aria-hidden="true">8.</strong> 导入与导出</a></li><li class="chapter-item expanded "><a href="09-内存与引用.html"><strong aria-hidden="true">9.</strong> 内存与引用</a></li><li class="chapter-item expanded "><a href="10-WASI.html"><strong aria-hidden="true">10.</strong> WASI</a></li></ol>
+            </div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky bordered">
+                    <div class="left-buttons">
+                        <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </button>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">WASM 汇编入门教程</h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/Evian-Zhang/wasm-tutorial" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="基本语法"><a class="header" href="#基本语法">基本语法</a></h1>
+<p>在深入学习了如何生成与使用WASM程序之后，我们已经有了许多模板，比如Rust生成WASM的，比如Web使用WASM的。因此，接下来我们就可以完全关注在WASM代码本身，一切新学习到的知识都可以通过之前拥有的模板来验证、测试。</p>
+<p>从本章开始，我们将学习WASM的基本语法。在本章中，我将介绍一些最基础的WASM的语法。这些基础知识往往比较零散，之间的联系并不是十分紧密，但如果单独一章介绍一个的话，又不足以支撑篇幅。因此，本章就将那些基础的、小块儿的知识放在一起来介绍。</p>
+<p>我们仍然以Hello world一章中最基本的程序<code>library.wat</code>为例：</p>
+<pre><code class="language-wasm">(module ;; Define a module
+    ;; Define a function with name `add`, two parameters of type i32, and returns i32
+    (func $add (param $left i32) (param $right i32) (result i32)
+        local.get $left ;; Push parameter `left` to stack
+        local.get $right ;; Push parameter `right` to stack
+        i32.add ;; Consume two values at stack top, and push the sum to stack
+    )
+    (export &quot;add&quot; (func $add)) ;; Export this function with symbol &quot;add&quot;
+)
+</code></pre>
+<h2 id="注释"><a class="header" href="#注释">注释</a></h2>
+<p>首先，我们第一眼看这个代码，就可以立刻明白，在WASM中，以两个分号<code>;;</code>打头的是注释。当然，C语言中的块注释<code>/* ... */</code>，WASM中也有类似的<code>(; ... ;)</code>：</p>
+<pre><code class="language-wasm">(module (; This is comment ;))
+</code></pre>
+<p>因此，在仔细研究WASM的语法结构的时候，可以在脑中直接把注释部分忽略，也就是下面这个样子：</p>
+<pre><code class="language-wasm">(module
+    (func $add (param $left i32) (param $right i32) (result i32)
+        local.get $left
+        local.get $right
+        i32.add
+    )
+    (export &quot;add&quot; (func $add))
+)
+</code></pre>
+<h2 id="s表达式"><a class="header" href="#s表达式">S表达式</a></h2>
+<p>熟悉Lisp语言的开发者在看到WASM的文本格式代码时，肯定第一眼就会说，这不就是S表达式（S-Expression）嘛！没错，WASM的文本格式，其整体而言是以S表达式的形式组织的。</p>
+<p>严格来说，一个S表达式的定义为：</p>
+<ul>
+<li>一个原子元素，或</li>
+<li><code>(x y)</code>，其中<code>x</code>和<code>y</code>都是S表达式</li>
+</ul>
+<p>这种格式非常适合表示树结构，在编程语言中，非常常见的树结构就是抽象语法树。例如，在Lisp中：</p>
+<pre><code class="language-lisp">(* 5 (+ 7 3))
+</code></pre>
+<p>意思就是<code>5 * (7 + 3)</code>。通过S表达式，Lisp的代码可以轻松地解析为抽象语法树。</p>
+<p>那我们就以S表达式的眼光，来看看我们的WASM代码的结构：</p>
+<ul>
+<li>从最外层来看，是一个<code>module</code>，其有两个组件：一个<code>func</code>，一个<code>export</code>。
+<ul>
+<li>对于<code>func</code>来说，其有三个子组件：两个<code>param</code>和一个<code>result</code>。其余部分均可以看做原子元素</li>
+<li>对于<code>export</code>来说，其有一个子组件<code>func</code>。</li>
+</ul>
+</li>
+</ul>
+<p>因此，从树结构的角度来理解的话，这段WASM代码，其最大深度为3，也就是可以看做这种形状：</p>
+<pre><code class="language-plaintext">module
+|------func
+|      |-------param
+|      |-------param
+|      |-------result
+|
+|------export
+       |-------func
+</code></pre>
+<h2 id="模块"><a class="header" href="#模块">模块</a></h2>
+<p>在WASM代码的顶层，是<code>module</code>。WASM规定，一个WASM程序对应一个WASM模块。因此，在我们的WASM代码中，顶层永远是<code>module</code>，并且不允许出现多个<code>module</code>。</p>
+<p>事实上，在我们之前通过Rust使用WASM的过程中，经常出现<code>Module</code>类型，对应一个WASM模块，这就是对应的其代码中的根结点<code>module</code>。</p>
+<h2 id="函数"><a class="header" href="#函数">函数</a></h2>
+<p>接下来，我们就好好研究一下WASM的函数是怎么写的。在WASM中，一个模块中可以有任意多个函数，而下面我们研究研究之前代码里的函数</p>
+<pre><code class="language-wasm">(func $add (param $left i32) (param $right i32) (result i32)
+    local.get $left
+    local.get $right
+    i32.add
+)
+</code></pre>
+<h3 id="标识符"><a class="header" href="#标识符">标识符</a></h3>
+<p>首先，我们看到，紧跟在<code>func</code>后面的，是<code>$add</code>。在WASM中，以<code>$</code>打头的称为标识符，它和我们在高级编程语言里遇到的标识符有着同样的作用。也就是说，<code>func $add</code>就代表这个函数名字叫add。</p>
+<p>有两点需要注意的。首先，标识符不是必须的。标识符的存在，只是为了方便后续对这个元素的引用。例如，我们可以看到，在我们的WASM代码中，最后的<code>export</code>一段，引用了我们之前定义的函数<code>func $add</code>。因此，我们才必须给这个函数一个名字<code>$add</code>。如果我们在整个代码中，不需要引用这个函数，那我们无需给这个函数名字，可以直接写成</p>
+<pre><code class="language-wasm">(func (param $left i32) (param $right i32) (result i32)
+    local.get $left
+    local.get $right
+    i32.add
+)
+</code></pre>
+<p>第二点，标识符不是必须出现在二进制格式中的。和高级编程语言一样，标识符只是方便开发者进行编程。而一个标识符究竟会不会出现在生成的二进制镜像中，这取决于开发者的意愿。如果我们想将这个标识符导出，那么这个标识符就可以以字符串的形式出现在二进制镜像中。我们WASM代码的最后一段的<code>export</code>就做了这个事。</p>
+<p>除了使用标识符以外，我们还可以用索引来引用WASM中的元素。我们提到，二进制镜像中不会包含标识符，只会包含开发者手动指定的导出符号。那么，如果我们将一个文本格式的WASM程序转译成二进制格式，然后再转译回文本格式，那么标识符会变成什么呢？</p>
+<p>我们可以手写一个<code>index.wat</code>：</p>
+<pre><code class="language-wasm">(module
+    (func $add (param $left i32) (param $right i32) (result i32)
+        local.get $left
+        local.get $right
+        i32.add
+    )
+    (func $sub (param $left i32) (param $right i32) (result i32)
+        local.get $left
+        local.get $right
+        i32.sub
+    )
+    (export &quot;sub&quot; (func $sub))
+)
+</code></pre>
+<p>这里声明了两个函数，导出的是第二个函数<code>$sub</code>，因此更方便我们理解索引结构。我们使用如下指令：</p>
+<pre><code class="language-shell">wat2wasm index.wat -o index.wasm
+wasm2wat index.wasm -o index2.wat
+</code></pre>
+<p>我们查看<code>index2.wat</code>的内容，会发现是：</p>
+<pre><code class="language-wasm">(module
+  (type (;0;) (func (param i32 i32) (result i32)))
+  (func (;0;) (type 0) (param i32 i32) (result i32)
+    local.get 0
+    local.get 1
+    i32.add)
+  (func (;1;) (type 0) (param i32 i32) (result i32)
+    local.get 0
+    local.get 1
+    i32.sub)
+  (export &quot;sub&quot; (func 1)))
+</code></pre>
+<p>首先先不用管<code>type</code>相关的语句，这之后马上就会提到。我们发现，原先在函数定义时的标识符<code>$add</code>和<code>$sub</code>，由于没有记录到二进制镜像中，因此在还原的时候，被替换为了块注释<code>(;0;)</code>和<code>(;1;)</code>。这些注释相当于空字符，不会对语义产生影响，所以我们可以忽略。</p>
+<p>但是，在最后的导出语句中，使用了<code>(func 1)</code>来替代<code>(func $sub)</code>。这是因为，在WASM中，同级同属性的节点会自动拥有从0开始的索引。说得直白一点，这个WASM程序有两个函数，因此自动地，第一个函数有索引值0，第二个函数有索引值1。我们可以直接通过索引值来引用这个函数，所以<code>export</code>语句就可以通过<code>(func 1)</code>引用第二个函数，也就是我们先前定义的<code>sub</code>。</p>
+<p>除了函数之外，几乎所有的元素都会有其索引值，我们也可以在这个代码中看到<code>(type 0)</code>、<code>(local.get 0)</code>等语句，这就是索引值的使用。</p>
+<h3 id="签名"><a class="header" href="#签名">签名</a></h3>
+<p>在<code>func $add</code>之后，是声明这个函数的参数、返回值类型。这里我们可以很直观地看到，这个函数接收两个<code>i32</code>类型的参数，返回一个<code>i32</code>类型的值。一个函数的参数+返回值类型，称为这个函数的签名（Signature）。</p>
+<p>对于参数来说，正如我们之前提到的，如果一个参数不需要用名字去引用它，就可以省略相应的标识符，例如<code>(param i32)</code>。如果一个函数的参数都没有标识符，我们有一个语法糖：</p>
+<pre><code class="language-wasm">(func $add (param i32 i32) (result i32)
+    ;; ...
+)
+</code></pre>
+<p>此外，我们也可以额外加一个<code>type</code>语句，用来double check一下这个函数的签名的正确性（只会在生成二进制程序时被检查）：</p>
+<pre><code class="language-wasm">(module
+    (type $add_type (func (param i32 i32) (result i32)))
+    (func $add (type $add_type) (param $left i32) (param $right i32) (result i32)
+        local.get $left
+        local.get $right
+        i32.add
+    )
+    (export &quot;add&quot; (func $add))
+)
+</code></pre>
+<p>这也解释了我们在之前，将生成的二进制程序还原成文本形式时出现的<code>type</code>语句。</p>
+<h3 id="栈机"><a class="header" href="#栈机">栈机</a></h3>
+<p>我们接下来就重点关注其函数体，也就是其中的指令部分：两个<code>local.get</code>和一个<code>i32.add</code>。</p>
+<p>在了解具体指令之前，我们首先需要知道「栈机」（Stack machine）和「寄存器机」（Register machine）。</p>
+<h4 id="计算模型"><a class="header" href="#计算模型">计算模型</a></h4>
+<p>对于一个基于虚拟机的编程语言（例如Java基于JVM，Rust、C/C++可以基于WASM），所谓的「虚拟机」就是指，输入其自定义的指令字节码（如JVM字节码、WASM二进制表示等），虚拟机将根据指令字节码，执行相应的指令。在我们实现这样一个虚拟机的时候，往往需要设计一种「计算模型」（Computational model）。在虚拟机的常见实现中，主要分为两种计算模型：「栈机」和「寄存器机」。</p>
+<p>例如，我们希望我们的虚拟机能够实现加法<code>add</code>指令：</p>
+<ul>
+<li>
+<p>对于栈机而言，我们需要在整个执行过程中，维护一个操作数栈。<code>add</code>指令不需要显式给出参数。我们若想执行加法功能，例如实现<code>2 + 3</code>，需要：</p>
+<ol>
+<li>将数字2和3压入栈中</li>
+<li>调用<code>add</code>指令</li>
+<li>虚拟机从栈上弹出两个数字，也就是2和3</li>
+<li>将其相加</li>
+<li>把结果5压入栈中</li>
+</ol>
+</li>
+<li>
+<p>对于寄存器机而言，我们需要维护一系列寄存器。<code>add</code>指令需要三个寄存器编号作为参数。我们若想执行<code>2 + 3</code>，需要：</p>
+<ol>
+<li>先将2放入0号寄存器，然后将3放入1号寄存器，再将2号寄存器作为返回值存放的寄存器</li>
+<li>将这3个寄存器编号，也就是0、1和2作为参数，调用<code>add</code>指令</li>
+<li>虚拟机去相应的寄存器中寻找值</li>
+<li>将其相加</li>
+<li>把结果5存到2号寄存器中去</li>
+</ol>
+</li>
+</ul>
+<p>熟悉Intel的汇编以及调用约定的开发者想必会有一些共鸣，从某种意义上，32位x86的调用约定类似一种栈机（但其返回值不通过栈传递），而64位AMD64的调用约定类似一种寄存器机。</p>
+<p>此外，还需要注意的是，这里讲的栈机中的栈，和我们真正编程过程中使用的，进程的栈并不是同一个东西。进程的栈在执行过程中，还要把什么返回地址、帧指针之类的全压到栈上去，是一种混合了「调用栈」与「操作数栈」的模型。而这里讲的栈机的栈，仅仅是用来传递参数和返回值的。</p>
+<p>当然，还有一点值得指出。无论是栈机还是寄存器机，都只是一种「模型」。也就是说，通过这种模型，可以很好地定义其执行的方式、顺序，但真正的虚拟机实现里，是不一定需要维护一个真实的栈或者一系列寄存器的，可以通过优化去做更多的事。</p>
+<h4 id="wasm栈机"><a class="header" href="#wasm栈机">WASM栈机</a></h4>
+<p>WASM大致是一个栈机（但实际上，WASM的局部变量机制导致它不是一个真正的栈机，详情可见<a href="http://troubles.md/wasm-is-not-a-stack-machine/">WebAssembly Is Not a Stack Machine</a>），目前我们可以粗略地用栈机的眼光来理解WASM的函数。</p>
+<p>回到我们之前的add函数。从栈机的角度来简单地解释一下这个函数的意思：</p>
+<ul>
+<li>
+<p><code>local.get $left</code></p>
+<p>将第一个参数压栈</p>
+</li>
+<li>
+<p><code>local.get $right</code></p>
+<p>将第二个参数压栈</p>
+</li>
+<li>
+<p><code>i32.add</code></p>
+<p>从栈上弹出两个参数，将其求和，然后将结果压栈</p>
+</li>
+</ul>
+<p>我们之前声明了<code>add</code>函数，可以注意到，我们说了它有一个<code>i32</code>类型的返回值。然后在这个函数结束的时候，它的栈上正好还剩这一个结果。这个最终剩在栈上的值，就会成为这个函数的返回值。这种栈的「平衡性」，也是WASM引擎的「验证」阶段可以静态完成的一个重要的事。</p>
+<p>但我们在写WASM的过程中，有时候很难保证，函数结束的时候，恰好栈上剩下的值的个数等于返回值的个数。有可能有一些中间变量也在栈上，只不过不在栈顶。为了保证栈的平衡性，我们可以使用<code>return</code>或者<code>drop</code>指令。<code>return</code>指令首先会查看当前函数返回值的个数，然后从栈上弹出相应个数个值作为返回值，剩下的全部丢掉。而<code>drop</code>指令则一般用在没有返回值的函数中，直接将当前栈上所有值丢掉。</p>
+<p>此外，有一个非常重要的，值得注意的事：参数传递的顺序。我们可以发现，与x86不同，我们是<strong>从左往右</strong>压栈。也就是说，接下来的指令的第一个参数先压栈，最后一个参数最后再压栈。这是值得注意的。</p>
+<p>另外，我们需要强调的是，尽管在上述指令的解释中，我们用了「压栈」，但实际上这些指令本身是不会压栈的，也没有一个指令专门是「压栈」。只不过是，WASM在执行每条指令时，将根据这条指令的特性，调整栈。例如，WASM在执行时，发现这条指令是<code>local.get</code>，它不接受参数，返回一个值，因此将这条执行执行后的值放到栈上；在执行到<code>i32.add</code>时，发现这条指令接受两个参数，返回一个值，因此把栈上弹两个值出来，作为参数，执行后把结果存到栈上。</p>
+<p>在真正书写WASM的过程中，我们有一个语法糖（一般被称为折叠格式（folded form））：</p>
+<pre><code class="language-wasm">(func $add (param $left i32) (param $right i32) (result i32)
+    (i32.add (local.get $left) (local.get $right))
+)
+</code></pre>
+<p>这个语法一看就和我们正常的高级语言的语法类似了，但是这是个语法糖，其底层还是会变成之前的栈机形式，不过这种写法更利于人类阅读和书写。</p>
+<h3 id="指令"><a class="header" href="#指令">指令</a></h3>
+<p>在WASM中，大部分的指令都分为两个部分，前半部分表示指令所属的类别，后半部分表示指令的内容。例如，之前我们遇到的<code>local.get</code>，其类别属于<code>local</code>，内容是获取local的值；<code>i32.add</code>，类别属于<code>i32</code>，内容是将两个i32的值相加。</p>
+<p>WASM的指令数目不多，和AArch64类似，基本属于精简指令集了，不会有非常复杂的指令。具体的指令列表可以参考官方文档<a href="https://webassembly.github.io/spec/core/appendix/index-instructions.html">Index of Instructions</a>。在本系列中，不会集中地讲解指令集，而是会在需要的地方，详细解释与某些概念息息相关的指令。</p>
+<h3 id="基本的数字类型"><a class="header" href="#基本的数字类型">基本的数字类型</a></h3>
+<p>WASM最常做的事，就是进行大量的数字相关的计算。在WASM中，有以下四个数字类型：</p>
+<ul>
+<li>
+<p><code>i32</code></p>
+<p>32位整数类型</p>
+</li>
+<li>
+<p><code>i64</code></p>
+<p>64位整数类型</p>
+</li>
+<li>
+<p><code>f32</code></p>
+<p>32位单精度浮点型</p>
+</li>
+<li>
+<p><code>f64</code></p>
+<p>64位双精度浮点型</p>
+</li>
+</ul>
+<p>熟悉底层，特别是LLVM IR的开发者应该更方便理解这里的概念，因为和LLVM IR类似，WASM中的整型有无符号，并不是记录在类型信息中，而是根据不同的指令加以区别。对于了解高级语言的开发者来说，如Rust中，整型往往需要有符号信息（如<code>usize</code>和<code>isize</code>），但是在底层中，我们可以举两个例子。</p>
+<h4 id="有无符号结果一致"><a class="header" href="#有无符号结果一致">有无符号结果一致</a></h4>
+<p>在二进制层面，有符号整型往往是通过「补码」这种编码格式来存储，而无符号整型则直接原封不动存储就行。关于这种编码格式，各种本科的基础课里已经有了很多讲解。这里我们只需要知道一件事：</p>
+<p>我们设计的编码格式非常强大，强大到：我们通过CPU的加法器将两个寄存器的值a和b相加，得到c：</p>
+<ul>
+<li>如果将a和b看作有符号整数的编码，那么将c按照有符号整数解码，就是之前两个有符号整数相加的和</li>
+<li>如果将a和b看作无符号整数的编码，那么将c按照无符号整数解码，就是之前两个无符号整数相加的和</li>
+</ul>
+<p>也就是说，我们不需要有符号整数一个加法器、无符号整数一个加法器，而是一个加法器，就可以解决所有整型相加的问题，并且其有无符号，与底层CPU系统不再有关。</p>
+<p>因此，在WASM层面也是一致的。这里的<code>i32</code>、<code>i64</code>的<code>i</code>，只是整数integer的代表，不代表有无符号。当我们定义了add函数：</p>
+<pre><code class="language-wasm">(func $add (param $left i32) (param $right i32) (result i32)
+    local.get $left
+    local.get $right
+    i32.add
+)
+</code></pre>
+<p><code>i32.add</code>指令也不再指定符号信息，因为与底层无关。而其究竟有无符号，是根据使用这个的高级语言来决定的。在Rust层面，我们既可以将其看作一个<code>(i32, i32) -&gt; i32</code>的函数，也可以看做一个<code>(u32, u32) -&gt; u32</code>的函数。</p>
+<h4 id="有无符号结果不一致"><a class="header" href="#有无符号结果不一致">有无符号结果不一致</a></h4>
+<p>在加法层面，有无符号结果是一致的。然而有些指令则不一样。例如在整数除法时，根据符号不同，我们需要将结果按不同的方式向上或者向下取整。</p>
+<p>因此，在WASM指令集层面，提供了两个指令<code>i32.idiv_u</code>和<code>i32.idiv_s</code>，分别提供无符号整数除法和有符号整数除法。无符号整数除法将两个操作数<strong>看做</strong>无符号整数，有符号整数除法则是<strong>看做</strong>有符号整数。</p>
+<p>从这里，我们就可以看出，在WASM层面，与LLVM IR类似，整型变量有无符号，不存储在类型信息中，而是根据指令的不同来决定的。</p>
+<h2 id="导出"><a class="header" href="#导出">导出</a></h2>
+<p>在最后，我们使用了</p>
+<pre><code class="language-wasm">(export &quot;add&quot; (func $add))
+</code></pre>
+<p>来表示，我们要导出之前声明的一个叫<code>$add</code>的函数，并且它的导出的名字是&quot;add&quot;。事实上，还有一种更简单的写法：</p>
+<pre><code class="language-wasm">(module
+    (func (export &quot;add&quot;) (param $left i32) (param $right i32) (result i32)
+        local.get $left
+        local.get $right
+        i32.add
+    )
+)
+</code></pre>
+<p>将最后一个export语句直接移到函数的定义中。这样的话，就不需要在后面引用这个函数，从而不需要再给这个函数命名了，所以我们自然也省去了<code>$add</code>这个标识符。</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="04-WASM的使用.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next" href="06-变量与常量.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="04-WASM的使用.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next" href="06-变量与常量.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="elasticlunr.min.js"></script>
+        <script src="mark.min.js"></script>
+        <script src="searcher.js"></script>
+
+        <script src="clipboard.min.js"></script>
+        <script src="highlight.js"></script>
+        <script src="book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+    </body>
+</html>

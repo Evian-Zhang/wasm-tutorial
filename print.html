@@ -1,0 +1,1627 @@
+<!DOCTYPE HTML>
+<html lang="zh-Hans" class="sidebar-visible no-js light">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>WASM 汇编入门教程</title>
+        <meta name="robots" content="noindex" />
+
+
+        <!-- Custom HTML head -->
+        
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff" />
+
+        <link rel="icon" href="favicon.svg">
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="highlight.css">
+        <link rel="stylesheet" href="tomorrow-night.css">
+        <link rel="stylesheet" href="ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+        <!-- MathJax -->
+        <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    </head>
+    <body>
+        <!-- Provide site root to javascript -->
+        <script>
+            var path_to_root = "";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "light";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            var html = document.querySelector('html');
+            html.classList.remove('no-js')
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add('js');
+        </script>
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            var html = document.querySelector('html');
+            var sidebar = 'hidden';
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            }
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <div class="sidebar-scrollbox">
+                <ol class="chapter"><li class="chapter-item expanded affix "><a href="index.html">引言</a></li><li class="chapter-item expanded "><a href="01-Helloworld.html"><strong aria-hidden="true">1.</strong> Hello world</a></li><li class="chapter-item expanded "><a href="02-基础概念与工具链.html"><strong aria-hidden="true">2.</strong> 基础概念与工具链</a></li><li class="chapter-item expanded "><a href="03-WASM的生成.html"><strong aria-hidden="true">3.</strong> WASM的生成</a></li><li class="chapter-item expanded "><a href="04-WASM的使用.html"><strong aria-hidden="true">4.</strong> WASM的使用</a></li><li class="chapter-item expanded "><a href="05-基本语法.html"><strong aria-hidden="true">5.</strong> 基本语法</a></li><li class="chapter-item expanded "><a href="06-变量与常量.html"><strong aria-hidden="true">6.</strong> 变量与常量</a></li><li class="chapter-item expanded "><a href="07-控制语句与基本块.html"><strong aria-hidden="true">7.</strong> 控制语句与基本块</a></li><li class="chapter-item expanded "><a href="08-导入与导出.html"><strong aria-hidden="true">8.</strong> 导入与导出</a></li><li class="chapter-item expanded "><a href="09-内存与引用.html"><strong aria-hidden="true">9.</strong> 内存与引用</a></li><li class="chapter-item expanded "><a href="10-WASI.html"><strong aria-hidden="true">10.</strong> WASI</a></li></ol>
+            </div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky bordered">
+                    <div class="left-buttons">
+                        <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </button>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">WASM 汇编入门教程</h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/Evian-Zhang/wasm-tutorial" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="wasm-汇编入门教程"><a class="header" href="#wasm-汇编入门教程">WASM 汇编入门教程</a></h1>
+<p>本系列教程的GitHub仓库为<a href="https://github.com/Evian-Zhang/wasm-tutorial">Evian-Zhang/wasm-tutorial</a>，所有代码的源代码位于<code>code</code>目录下，推荐在<a href="https://evian-zhang.github.io/wasm-tutorial">evian-zhang.github.io/wasm-tutorial</a>中阅读，获得最佳体验。如需PDF版本，可在对应网页的右上角点击「打印」即可。</p>
+<p>在互联网大潮下，前端越来越「卷」。为了追求前端的性能，用于替代JavaScript的WebAssembly（简称WASM）的概念被提出。经过几年的发展与沉淀，开发者们发现WASM不仅仅在前端Web领域是一枚银弹：我们既可以在浏览器里运行WASM，也可以用<a href="https://wasmer.io">wasmer</a>、<a href="https://wasmtime.dev">wasmtime</a>等方式在任意环境下原生地执行WASM代码；在通用编程语言领域，Rust有提案建议<a href="https://internals.rust-lang.org/t/pre-rfc-procmacros-implemented-in-wasm/10860">将过程宏以WASM的形式执行</a>，并且有了相应的工具<a href="https://github.com/dtolnay/watt">watt</a>；在运维领域，Docker正在尝试<a href="https://docs.docker.com/desktop/wasm/">使用WASM代替传统容器</a>。</p>
+<p>因此，WASM不再仅仅是前端圈子里的掌上明珠，也逐渐走入全栈所有领域开发者的视野。所以，我决定写一系列文章《WASM汇编入门》，面向所有领域的开发者，介绍WASM入门。</p>
+<h2 id="本系列文章讲了什么"><a class="header" href="#本系列文章讲了什么">本系列文章讲了什么</a></h2>
+<p>本系列文章，将从头开始，以较底层的WASM汇编角度，全方位介绍WASM程序的生成、使用，以及WASM中的概念、汇编语法。</p>
+<p>本系列文章是我自己学习的一个记录，必然会有所错误、缺漏。还望大家不吝<a href="https://github.com/Evian-Zhang/wasm-tutorial/issues/new/choose">提出issue</a>、<a href="https://github.com/Evian-Zhang/wasm-tutorial/compare">发起PR</a>，相互指导，谢谢大家！</p>
+<h2 id="预备知识"><a class="header" href="#预备知识">预备知识</a></h2>
+<p>本系列文章的预备知识包括：</p>
+<ul>
+<li>
+<p>高级编程语言</p>
+<ul>
+<li>了解JavaScript及Web开发相关知识</li>
+<li>了解Rust、C开发相关概念及知识</li>
+</ul>
+</li>
+<li>
+<p>底层汇编</p>
+<ul>
+<li>了解LLVM相关概念（可参考我写的<a href="https://github.com/Evian-Zhang/llvm-ir-tutorial">LLVM IR入门指南</a>）</li>
+<li>了解一门常见的汇编语言，如AMD64架构汇编（可参考我写的<a href="https://github.com/Evian-Zhang/Assembly-on-macOS">macOS上的汇编入门</a>）或AArch64架构汇编（可参考我写的<a href="https://github.com/Evian-Zhang/learn-assembly-on-Apple-Silicon-Mac">在 Apple Silicon Mac 上入门汇编语言</a>）</li>
+</ul>
+</li>
+</ul>
+<p>这些预备知识并不是要求读者掌握的炉火纯青，而是大部分常见的概念要了解，以及一些简单的代码要能够看懂。在绝大部分以概念为主的章节中，我基本上是不会涉及具体的高级语言或者汇编语言的代码的，只有在与代码强相关的章节中，我才会以例子的形式引入相应的代码。</p>
+<h2 id="环境"><a class="header" href="#环境">环境</a></h2>
+<p>本文的所有代码的测试环境为</p>
+<ul>
+<li>
+<p>操作系统</p>
+<p>Ubuntu 22.04.1</p>
+</li>
+<li>
+<p>CPU</p>
+<p>Intel i9-12900K</p>
+</li>
+<li>
+<p>Clang</p>
+<p>Homebrew clang version 15.0.7</p>
+</li>
+<li>
+<p>emcc</p>
+<p>emcc (Emscripten gcc/clang-like replacement + linker emulating GNU ld) 3.1.5</p>
+</li>
+<li>
+<p>Rust</p>
+<p>rustc 1.67.0 (fc594f156 2023-01-24)</p>
+</li>
+<li>
+<p>wasmer</p>
+<p>wasmer 3.1.1</p>
+</li>
+<li>
+<p>wabt</p>
+<p>1.0.27</p>
+</li>
+</ul>
+<h2 id="什么是wasm"><a class="header" href="#什么是wasm">什么是WASM</a></h2>
+<p>那究竟什么是WASM呢？粗略来说，WASM是一种接近底层的「中间语言」。虽然它的名字里带有「Web」，但实际上它并不仅仅适用于Web。对于对编译器理论更熟悉的开发者来说，WASM与JVM字节码的用法非常相似，也类似于LLVM IR。通俗来讲，就是一种类似汇编语言的编程语言，可以由各种语言编译而来，可以在各种平台上执行。</p>
+<p>从开发者的角度来说，WASM格式可以由后端常见的编程语言编译得到，如C、C++、Rust、C#、Go、Swift等（具体可见<a href="https://webassembly.org/getting-started/developers-guide/">Compile a WebAssembly module from...</a>）。因此，后端的开发者可以用自己趁手的语言来开发WASM程序。</p>
+<p>从使用者的角度来说，WASM程序可以像JavaScript程序一样，运行在Web浏览器中（目前火狐、Chrome、Safari和Edge均支持执行WASM程序，具体可参考<a href="https://webassembly.org/roadmap/">Roadmap</a>），也可以通过wasmer、wasmtime等方式，在如Windows、macOS、Linux等原生环境下执行。因此，WASM程序具有很高的通用性。</p>
+<h2 id="为什么要使用wasm"><a class="header" href="#为什么要使用wasm">为什么要使用WASM</a></h2>
+<h3 id="兼容性"><a class="header" href="#兼容性">兼容性</a></h3>
+<p>成熟的技术选型，往往考虑最多的是技术的「兼容性」。如果一个技术在开发上不兼容（需要单独招程序员）、在使用上不兼容（「本网站请使用IE打开」），那就是依托答辩。</p>
+<p>从开发上来说，理论上，凡是以LLVM为后端的编程语言，都支持生成WASM程序。不说别的，主流的C/C++代码，均可生成WASM程序。</p>
+<p>从使用上来说，要求能在各个操作系统原生执行已经是基本要求了。WASM不仅如此，能在所有主流浏览器上执行！这可了不得了，Java Applet、Flash都哭了。目前Chrome的V8引擎（<a href="https://v8.dev/docs/wasm-compilation-pipeline">WebAssembly compilation pipeline</a>）、火狐的SpiderMonkey引擎（<a href="https://spidermonkey.dev/docs/index.html#baldrmonkey">BaldrMonkey</a>）、Safari的Webkit（<a href="https://webkit.org/blog/7691/webassembly/">Assembling WebAssembly</a>）都支持WASM。</p>
+<h3 id="前端积怨已久"><a class="header" href="#前端积怨已久">前端积怨已久</a></h3>
+<p>在前端，从编程语言的角度，对JavaScript的讨伐不绝于耳。尽管ES6等新标准力挽狂澜，给JavaScript增加了许多更利于开发者的特性，TypeScript的出现也让开发者维护项目更加方便，但是由于浏览器端天生需要非常严格的向前兼容性，许多因为历史原因而造成的失误无法弥补。因此，WASM的出现可以让前端开发者在开发WASM模块时，不再受JavaScript的折磨，可以选择更新更好更顺手的编程语言，维护更好的心情。</p>
+<h3 id="性能优势"><a class="header" href="#性能优势">性能优势</a></h3>
+<p>从性能的角度来看，尽管Google的V8引擎如前端的一针强心剂，将JavaScript代码的性能推向了原生级别，但是因为JavaScript语言本身的动态特性，性能还是会差一些。尽管JavaScript本身的特性更加适用于Web上针对DOM的灵活操作、请求响应JSON的解析等功能，但是随着前端负责的功能模块越来越广泛，对于计算密集型的操作，如密码学加解密、图像处理等操作，JavaScript的动态特性会减弱优化程度。而WASM则是底层二进制程序格式，由不同的编程语言编译而来。因此，对代码的优化就不再依赖传统的JavaScript优化，而是可以经过不同编程语言的优化，从而达到非常高的执行效率。</p>
+<h3 id="安全性"><a class="header" href="#安全性">安全性</a></h3>
+<p>WASM的安全性在其官网<a href="https://webassembly.org/docs/security/">Security</a>部分有详细的描述。一个最显著的特点，WASM程序是运行在沙盒中的。一般来说，WASM程序是无法读写除了自身被分配的内存以外的地址的，因此不会干扰外部程序执行。</p>
+<h4 id="license"><a class="header" href="#license">License</a></h4>
+<sup>
+本仓库遵循<a href="https://creativecommons.org/licenses/by/4.0/">CC-BY-4.0版权协议</a>。
+</sup>
+<br/>
+<sub>
+作为<a href="https://copyleft.org/">copyleft</a>的支持者之一，我由衷地欢迎大家积极热情地参与到开源社区中。Happy coding!
+</sub>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="hello-world"><a class="header" href="#hello-world">Hello world</a></h1>
+<p>正式学习WASM汇编的第一步，是先对WASM有一个初步的认识。因此，正如在学习别的编程语言的过程中，一个Hello world是必不可少的，本章也将展示WASM的一些基本程序。</p>
+<p>正如我们之前提到的，WASM主要有两个用途：一个是作为一个库，提供一些函数，给Web上的JavaScript调用或者给通用的程序调用；另一个是作为一个独立的程序在后端使用wasmer或者wasmtime等工具来直接执行。相应地，我们的程序，也有两个版本：库版本和独立的程序版本。</p>
+<h2 id="作为库"><a class="header" href="#作为库">作为库</a></h2>
+<p>我们创建一个文本文件<code>library.wat</code>，其内容为</p>
+<pre><code class="language-wasm">(module ;; Define a module
+    ;; Define a function with name `add`, two parameters of type i32, and returns i32
+    (func $add (param $left i32) (param $right i32) (result i32)
+        local.get $left ;; Push parameter `left` to stack
+        local.get $right ;; Push parameter `right` to stack
+        i32.add ;; Consume two values at stack top, and push the sum to stack
+    )
+    (export &quot;add&quot; (func $add)) ;; Export this function with symbol &quot;add&quot;
+)
+</code></pre>
+<p>这就是我们这一系列学习的核心，WASM汇编。看上去确实花里胡哨，搞JavaScript这种高级语言的看不懂，搞AMD64、AArch64这种汇编语言的看这也感觉奇形怪状。</p>
+<p>第一眼看不懂不要紧，之后我们会详细解释每一行每一个语句的意思。这里我们可以通过注释，简单了解到，这实际上是定义了一个名字是<code>add</code>的函数，将两个32位有符号整数相加并返回他们的和。</p>
+<p>接下来我们要做的，是将这个文本文件转变成二进制文件。这里我们需要使用<a href="https://github.com/WebAssembly/wabt">wabt</a>工具链，其README里有编译或下载安装的方法（对于Linux和macOS用户，也可以<a href="https://formulae.brew.sh/formula/wabt">使用Homebrew下载</a>）。当我们安装了wabt工具链之后，使用如下命令：</p>
+<pre><code class="language-shell">wat2wasm -o adder.wasm library.wat
+</code></pre>
+<p>这个命令将文本形式的<code>library.wat</code>翻译成了二进制形式的<code>adder.wasm</code>。</p>
+<p>接下来，我们怎么使用这个WASM库呢？</p>
+<h3 id="在web上使用"><a class="header" href="#在web上使用">在Web上使用</a></h3>
+<p>WASM模块目前最常用的场景，就是在Web上使用。因此，我们可以写一个基础的HTML：</p>
+<pre><code class="language-html">&lt;!doctype html&gt;
+&lt;html&gt;
+  &lt;head&gt;
+    &lt;meta charset=&quot;utf-8&quot;&gt;
+    &lt;title&gt;WASM Test&lt;/title&gt;
+  &lt;/head&gt;
+
+  &lt;body&gt;
+    &lt;script&gt;
+      WebAssembly.instantiateStreaming(fetch(&quot;./adder.wasm&quot;))
+        .then(obj =&gt; {
+            console.log(obj.instance.exports.add(1, 2));
+        });
+    &lt;/script&gt;
+  &lt;/body&gt;
+&lt;/html&gt;
+</code></pre>
+<p>我们注意到，需要使用<code>fetch</code>来获取这个wasm文件，因此由于浏览器的同源策略，我们不能直接双击打开这个html来看效果。我们可以用一些简易的服务程序，例如<a href="https://github.com/vercel/serve">serve</a>等，启动后访问相应的url，然后在控制台上，我们可以看到输出了<code>3</code>，说明正常运行了。</p>
+<p>这里我们看到有很多不同的API。关于具体的如何在Web上与WASM交互，之后的章节会有更详细的说明。</p>
+<h3 id="在通用程序中使用"><a class="header" href="#在通用程序中使用">在通用程序中使用</a></h3>
+<p>这里以Rust为例，我们看看如何在Rust程序中使用WASM模块提供的函数。</p>
+<p>首先，我们需要引入<a href="https://crates.io/crates/wasmer">wasmer</a>库（<a href="https://crates.io/crates/wasmtime">wasmtime</a>等其他库也可以）。我们的Rust程序为：</p>
+<pre><code class="language-rust  ignore">use anyhow::Result;
+use std::fs;
+use wasmer::{Imports, Instance, Module, Store, TypedFunction};
+
+fn main() -&gt; Result&lt;()&gt; {
+    let wasm_bytes = fs::read(&quot;./adder.wasm&quot;)?;
+    let mut store = Store::default();
+    let module = Module::new(&amp;store, wasm_bytes)?;
+    let imports = Imports::default();
+    let instance = Instance::new(&amp;mut store, &amp;module, &amp;imports)?;
+    let run_func: TypedFunction&lt;(u32, u32), u32&gt; =
+        instance.exports.get_typed_function(&amp;mut store, &quot;add&quot;)?;
+    let sum = run_func.call(&amp;mut store, 1, 2)?;
+    println!(&quot;Sum is {sum}&quot;);
+    Ok(())
+}</code></pre>
+<p>编译运行后，会输出&quot;Sum is 3&quot;。由此可见，Rust程序也可以使用WASM提供的函数。</p>
+<p>关于Rust等通用程序如何与WASM模块交互，之后也会有章节进行具体说明。</p>
+<h2 id="作为独立程序"><a class="header" href="#作为独立程序">作为独立程序</a></h2>
+<p>WASM作为库的使用看上去非常简单，我们需要写的WASM汇编代码也很少，不过实现的功能也相对简单，只是一个相加求和的功能。接下来，我们真真正正地写一个Hello world来看看！（以下代码出自<a href="https://github.com/bytecodealliance/wasmtime/blob/main/docs/WASI-tutorial.md#web-assembly-text-example">bytecodealliance/wastime</a>）</p>
+<pre><code class="language-wasm">(module
+    ;; Import the required fd_write WASI function which will write the given io vectors to stdout
+    ;; The function signature for fd_write is:
+    ;; (File Descriptor, *iovs, iovs_len, nwritten) -&gt; Returns number of bytes written
+    (import &quot;wasi_unstable&quot; &quot;fd_write&quot; (func $fd_write (param i32 i32 i32 i32) (result i32)))
+
+    (memory 1)
+    (export &quot;memory&quot; (memory 0))
+
+    ;; Write 'hello world\n' to memory at an offset of 8 bytes
+    ;; Note the trailing newline which is required for the text to appear
+    (data (i32.const 8) &quot;hello world\n&quot;)
+
+    (func $main (export &quot;_start&quot;)
+        ;; Creating a new io vector within linear memory
+        (i32.store (i32.const 0) (i32.const 8))  ;; iov.iov_base - This is a pointer to the start of the 'hello world\n' string
+        (i32.store (i32.const 4) (i32.const 12))  ;; iov.iov_len - The length of the 'hello world\n' string
+
+        (call $fd_write
+            (i32.const 1) ;; file_descriptor - 1 for stdout
+            (i32.const 0) ;; *iovs - The pointer to the iov array, which is stored at memory location 0
+            (i32.const 1) ;; iovs_len - We're printing 1 string stored in an iov - so one.
+            (i32.const 20) ;; nwritten - A place in memory to store the number of bytes written
+        )
+        drop ;; Discard the number of bytes written from the top of the stack
+    )
+)
+</code></pre>
+<p>同样地，我们把这个程序翻译成二进制格式：</p>
+<pre><code class="language-shell">wat2wasm -o standalone.wasm standalone.wat
+</code></pre>
+<p>如果要执行这个WASM程序，我们需要安装一个WASM运行时，比较常见的包括<a href="https://wasmer.io">wasmer</a>和<a href="https://wasmtime.dev">wasmtime</a>。</p>
+<p>我们以wasmer为例，使用</p>
+<pre><code class="language-shell">wasmer run standalone.wasm
+</code></pre>
+<p>我们可以看到，屏幕上输出了&quot;hello world&quot;，成功了！</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="基础概念与工具链"><a class="header" href="#基础概念与工具链">基础概念与工具链</a></h1>
+<p>要学习WASM，首先我们需要了解WASM的基础概念与工具链。</p>
+<h2 id="基础概念"><a class="header" href="#基础概念">基础概念</a></h2>
+<p>在了解WASM的语法之前，我们应该首先了解WASM的相关概念及工具链。因此，这里我们不会详细介绍WASM的语法，而是留在之后详细介绍。</p>
+<h3 id="wasm格式"><a class="header" href="#wasm格式">WASM格式</a></h3>
+<p>WASM本身的层级与JVM、LLVM IR类似，定义了一套指令集，与常用的编程语言不同，更加偏于底层一些。与LLVM IR类似，WASM也有二进制格式与文本格式。</p>
+<p>在Hello world一章中：</p>
+<ul>
+<li>我们手写的，以<code>.wat</code>结尾的，就是文本格式的WASM</li>
+<li>我们使用<code>wat2wasm</code>生成的，以<code>.wasm</code>结尾的，就是二进制格式的WASM。</li>
+</ul>
+<p>在我们生成一个WASM程序用于执行时，往往使用的二进制格式，以便执行器解析和减小传输体积。而在我们阅读以及手动书写时，往往会使用文本格式。</p>
+<h3 id="嵌入环境"><a class="header" href="#嵌入环境">嵌入环境</a></h3>
+<p>之前提到，WASM一大显著的特点，就是可以在各种环境下运行。例如，WASM可以在各大主流浏览器中运行，也可以当作库被Rust、C调用，也可以作为独立的程序在系统中运行。</p>
+<p>这决定了一个特性：WASM和C++、JavaScript语言一样，是一个标准与实现分离的语言。也就是说，WASM有一个类似于标准委员会的组织，制定了WASM的标准，而遵循这个标准的WASM程序可以在哪里运行，则是根据各个环境的实现决定的。比如说，Chrome的V8引擎实现了WASM的标准，而我们之前用到的wasmer、wasmtime也各实现了WASM的标准。</p>
+<p>对于WASM程序而言，不同的实现也就对应了不同的运行环境。在WASM概念中，会将这种环境称为嵌入环境（Embedder）。例如，WASM的V8引擎实现，将其嵌入到Chrome浏览器的Web环境中，而Linux上的wasmer实现，则是将WASM嵌入到Linux环境中。</p>
+<h3 id="提案"><a class="header" href="#提案">提案</a></h3>
+<p>标准与实现分离的一大好处，或者说一大根本原因，就是能够获得极广的支持度，WASM因此可以在各大主流浏览器以及操作系统中运行。但是，一个“臭名昭著”的“缺点”也随之而来：并不是所有标准都被实现了。熟悉C++的同学一定经历过，想要使用最新标准的语义，例如C++20的API，首先得看看主流的编译器（GCC、Clang、MSVC）是否支持。而使用JavaScript的前端开发者更是经常抱怨「Safari是新时代的IE」。</p>
+<p>WASM也不可避免地拥有这个问题，也就是不同WASM的实现对特性的支持度不同。与JavaScript类似，WASM也用了「提案」（Proposal）体系来缓解这个问题。粗略地来讲，WASM有一个核心规范，这个规范是所有的实现都遵循的。在这个规范的基础上，会有一些提案来增加新的功能。这些提案经过各方权衡以及讨论，最终又会进入新的标准之中。具体提案的实现情况可以看<a href="https://webassembly.org/roadmap/">Roadmap</a>。</p>
+<p>举个例子，目前WASM的内存最多只有4GB，可以看做一个32位的系统。<a href="https://github.com/WebAssembly/memory64/blob/main/proposals/memory64/Overview.md">Memory64</a>提案将内存扩展到了64位。顺带提一句，这也是为什么当我们在使用高级语言编译WASM的时候，声明的target triple是wasm32而不是wasm。目前，我们并不能直接在所有嵌入环境下都直接使用64位的内存，这也是实现对这一提案的支持度不同导致的。</p>
+<p>在这个系列中，我所讲的大部分主要功能，都是WASM的核心规范。如果有涉及到提案部分（也就是说不一定所有实现都支持）时，我会加以特殊说明。</p>
+<h3 id="wasi"><a class="header" href="#wasi">WASI</a></h3>
+<p>和WASM一个紧密相关的概念是WASI（WebAssembly System Interface）。这个概念十分重要，之后会有专门的章节介绍。但是，我们在学习WASM之前，还是有必要先对这个概念有一个认识。</p>
+<p>用汇编语言来类比，当我们使用汇编语言的时候，「指令集」给我们提供了许多基础指令，例如加减乘除、控制流转移等等。但是，我们如果仅仅用这些基础指令写程序，基本上是写不出一个「有状态」（Stateful）的程序的。例如，我们只能写出一个求和函数，给它输入是2和3，输出就一定是5，无论运行多少次都是这样的。但是，我们在真正写程序的过程中，往往是有状态的。例如创建一个文件，那么运行第二次，就会提示文件已存在，创建失败。在汇编语言中，这是使用「系统调用」（Syscall）来实现的。AMD64指令集的汇编程序通过执行<code>syscall</code>指令，通知处理器，处理器将执行流交给操作系统内核，操作系统内核执行相应的函数。</p>
+<p>对于WASM也一样，WASM提供的基础指令同样不能实现例如文件创建等高级功能。因此，WASI被提了出来。WASI实际上也是一个标准，其规范了一系列与系统相关的API，如文件读写等。而不同的嵌入环境下的不同实现可以选择性地实现这些接口。例如，在网页中，我们不能直接读写任意路径文件，因此当嵌入环境是网页时，WASM引擎将不会实现相应的接口。</p>
+<p>值得指出的是，WASM和WASI实际上是一种独立的关系。如果我们的程序不使用WASI提供的接口，那么对应的target triple实际上是wasm32-unknown-unknown。而如果我们的程序使用WASI提供的接口，则对应的是wasm32-wasi。</p>
+<p>另一个十分常见的与系统交互的情况，实际上是进程创建。当我们运行一个独立的可执行程序的时候，系统实际上会将命令行参数、环境变量等传递给程序，而在程序退出的时候，会将返回值传递回操作系统。这其实暗示了一个非常重要的事：事实上，我们所有独立运行的WASM程序（例如我们前一章中打印hello world的程序）都一定是使用了WASI的程序。</p>
+<p>由于WASI较为复杂，之后会有专门的章节介绍WASI，因此接下来的介绍将主要集中在不使用WASI的程序，也就是将WASM作为库使用的情况。</p>
+<h2 id="wasm基础工具链"><a class="header" href="#wasm基础工具链">WASM基础工具链</a></h2>
+<p>讲了这么多WASM的概念，我们可以来梳理一下，在我们一般的开发者进行软件开发的过程中，是如何使用WASM的呢？</p>
+<ol>
+<li>使用高级语言（Rust/C++等）编写代码</li>
+<li>使用特定的编译器，将代码编译成WASM程序</li>
+<li>在不同的嵌入环境中（如Web、特定操作系统等）使用WASM程序</li>
+</ol>
+<p>那么，在这一过程中，与WASM相关的基础工具有哪些呢？接下来，我们可以粗略地了解一下WASM涉及的基础工具链。而具体的如何生成WASM和如何使用WASM，将在之后的章节详细解释。</p>
+<h3 id="生成wasm程序"><a class="header" href="#生成wasm程序">生成WASM程序</a></h3>
+<p>我们常用的C/Rust，都是通过LLVM后端来生成WASM程序的。<a href="https://www.llvm.org">LLVM</a>是现在最主流的编译器后端之一，其通过LLVM IR中间语言，让编程语言的开发者只需要考虑编译器前端。关于LLVM IR，可以参考我写的<a href="https://github.com/Evian-Zhang/llvm-ir-tutorial">LLVM IR入门指南</a>。简单来说，对于C语言、Rust等编程语言，其编译器通过将代码变为AST，然后进行分析，最后生成LLVM IR。而LLVM后端则将LLVM IR生成到不同平台的可执行程序。</p>
+<h3 id="处理wasm程序"><a class="header" href="#处理wasm程序">处理WASM程序</a></h3>
+<p>我们在Hello world一章中，已经初次经历了wabt，一个用于处理WASM的工具链。wabt主要提供了以下几个工具：</p>
+<ul>
+<li>
+<p><code>wat2wasm</code></p>
+<p>将<code>.wat</code>的文本格式WASM转换为<code>.wasm</code>的二进制格式WASM</p>
+</li>
+<li>
+<p><code>wasm2wat</code></p>
+<p>将<code>.wasm</code>的二进制格式WASM转换为<code>.wat</code>的文本格式WASM</p>
+</li>
+<li>
+<p><code>wasm-objdump</code></p>
+<p>查看<code>.wasm</code>的二进制格式WASM中的信息。</p>
+</li>
+</ul>
+<p><code>wasm-objdump</code>与<code>wasm2wat</code>的区别就在于，前者可以更好地查看二进制格式中每个字节对应的哪条文本指令，并且也可以查看相应的元信息。</p>
+<p>此外，另一套工具链为<a href="https://github.com/WebAssembly/binaryen">binaryen</a>。wabt工具链在进行文本格式与二进制格式的转化的过程中，没有任何多余的步骤，采用一对一的直译；而binaryen工具链，定义了一整套binaryen IR，比WASM更为底层，来优化WASM程序。</p>
+<p>例如，binaryen工具链提供了<code>wasm-opt</code>工具，我们可以使用</p>
+<pre><code class="language-shell">wasm-opt a.wasm -o optimized.wasm -O3
+</code></pre>
+<p>将<code>a.wasm</code>优化，并输出<code>optimized.wasm</code>。</p>
+<h3 id="使用wasm程序"><a class="header" href="#使用wasm程序">使用WASM程序</a></h3>
+<p>当WASM程序在Web端使用时，不同的主流浏览器的引擎分别有实现。当我们将其作为一个库在C++/Rust程序中使用的时候，可以使用wasmer、wasmtime等工具作为库来使用。</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="wasm的生成"><a class="header" href="#wasm的生成">WASM的生成</a></h1>
+<p>在我们学习底层语言，如LLVM IR、AMD64和AArch64汇编等的过程中，一个非常有效的方法是，将自己熟悉的高级语言编译为相应的底层语言，从而了解不同的语义是怎样在底层实现的。因此，我们在学习WASM的过程中，首先也可以先学习一下如何由高级语言生成WASM。</p>
+<p>目前最主流的生成WASM的高级语言是Rust和C/C++，因此，本章也主要以这两个语言为例说明。</p>
+<h2 id="rust程序生成wasm"><a class="header" href="#rust程序生成wasm">Rust程序生成WASM</a></h2>
+<p>我们可以用<code>rustup</code>程序来管理Rust语言能够生成的目标平台，例如，使用</p>
+<pre><code class="language-shell">rustup target list
+</code></pre>
+<p>可以查看目前Rust支持生成哪些平台的程序。我们可以在这其中看到<code>wasm32-unknown-unknown</code>和<code>wasm32-wasi</code>。目前，我们需要<code>wasm32-unknown-unknown</code>。因此，我们使用</p>
+<pre><code class="language-shell">rustup target add wasm32-unknown-unknown
+</code></pre>
+<p>下载安装相应的组件，随后，我们就可以使用Rust生成WASM程序了。</p>
+<h3 id="基础方法"><a class="header" href="#基础方法">基础方法</a></h3>
+<p>我们使用</p>
+<pre><code class="language-shell">cargo new --lib rust-wasm-adder
+</code></pre>
+<p>生成一个默认的Rust库<code>rust-wasm-adder</code>。</p>
+<p>首先，我们需要修改<code>Cargo.toml</code>，在其中加上</p>
+<pre><code class="language-toml">[lib]
+crate-type = [&quot;cdylib&quot;]
+</code></pre>
+<p>随后，在<code>lib.rs</code>中写上</p>
+<pre><code class="language-rust  ignore">#[no_mangle]
+pub extern &quot;C&quot; fn add(left: usize, right: usize) -&gt; usize {
+    left + right
+}</code></pre>
+<p>然后，使用</p>
+<pre><code class="language-shell">cargo build --release --target wasm32-unknown-unknown
+</code></pre>
+<p>编译后，就可以在<code>target/wasm32-unknown-unknown/release/</code>目录下找到<code>rust_wasm_adder.wasm</code>文件，这就是我们生成的WASM程序。这个WASM程序提供了<code>add</code>函数，我们可以使用Hello world一章中提供的方法，在Web或者后端将这个WASM作为库使用，来验证我们确实生成成功了。</p>
+<p>关于这段Rust代码，有几点值得指出说明。</p>
+<h4 id="no_mangle"><a class="header" href="#no_mangle"><code>#[no_mangle]</code></a></h4>
+<p>首先是<code>#[no_mangle]</code>。这个属性和<code>#[export_name = &quot;xxxx&quot;]</code>一样，在Rust官方文档的<a href="https://doc.rust-lang.org/reference/abi.html">Application Binary Interface</a>中有说明。这些属性一般而言，是在我们用Rust写一些提供给别的语言调用的库函数时使用，用来关闭命名修饰（Name mangling）。但是在目标平台为WASM时，语义会有少许变化。在这里，使用<code>#[no_mangle]</code>属性，除了告诉编译器，生成的函数名字在二进制层面就叫<code>add</code>以外，还有一个作用，是让编译器<strong>导出</strong>这个符号。我们知道，当我们使用一个Rust crate的时候，只能使用其中用<code>pub</code>修饰的函数。但是，<code>pub</code>只是Rust语义层面的。在WASM层面，我们必须使用<code>#[no_mangle]</code>或者<code>#[export_name = &quot;xxxx&quot;]</code>这个属性，才能确保编译器确实导出了这个函数。</p>
+<h4 id="extern-c"><a class="header" href="#extern-c"><code>extern &quot;C&quot;</code></a></h4>
+<p>其次是<code>extern &quot;C&quot;</code>。同样地，这个修饰符在一般情况下，是用来告诉编译器，这个函数的ABI采用C语言的ABI，以便在生成二进制库的时候可以被别的编程语言调用。而在生成目标为WASM的情况下，目前Rust的<code>extern &quot;wasm&quot;</code><a href="https://github.com/rust-lang/rust/issues/83788">还没有稳定</a>，所以暂时也是使用<code>extern &quot;C&quot;</code>来声明ABI。</p>
+<h4 id="usize"><a class="header" href="#usize"><code>usize</code></a></h4>
+<p>还有一点值得注意，我们之前提到，目前通用的WASM程序可以看做32位平台，因为其内存最多只有32位。所以，<code>usize</code>在这个平台下实际上是<code>u32</code>。我们通过</p>
+<pre><code class="language-shell">wasm2wat target/wasm32-unknown-unknown/release/rust_wasm_adder.wasm -o rust_wasm_adder.wat
+</code></pre>
+<p>也可以看到这一段代码：</p>
+<pre><code class="language-wasm">(func $add (type 0) (param i32 i32) (result i32)
+  local.get 1
+  local.get 0
+  i32.add)
+</code></pre>
+<p>从这也可以看出来，确实参数确实是32位（关于WASM中的<code>i32</code>和Rust中的<code>u32</code>的关系，之后我们会解释）。</p>
+<h4 id="导出函数"><a class="header" href="#导出函数">导出函数</a></h4>
+<p>还有一点值得指出的是，上面这些额外的修饰，只有在该函数需要被导出时才需要使用。也就是说，如果我们写的Rust程序内部有一些内部的函数，不需要在WASM中导出，用来被别的语言使用，那么就不需要加这些额外的修饰。</p>
+<h4 id="系统交互"><a class="header" href="#系统交互">系统交互</a></h4>
+<p>此外，我们之前提到过，WASM本身提供的基础指令，是没有办法进行系统调用的。WASI提供了一套与系统交互的接口，供WASM来使用。因此，当我们Rust程序的目标平台是<code>wasm32-unknown-unknown</code>时（也就是说，不使用WASI），是没有办法，在不导入别的函数的情况下，直接进行系统操作的。因此，如果我们的<code>add</code>函数写成</p>
+<pre><code class="language-rust  ignore">#[no_mangle]
+pub extern &quot;C&quot; fn add(left: usize, right: usize) -&gt; usize {
+    println!(&quot;This is add in WASM&quot;);
+    left + right
+}</code></pre>
+<p>在执行这个WASM模块的时候，是不会产生任何输出的。这是因为<code>println</code>宏需要对<code>stdout</code>进行写操作，而这是WASI提供的能力，因此是做不到输出的。</p>
+<h3 id="wasm-bindgen"><a class="header" href="#wasm-bindgen"><code>wasm-bindgen</code></a></h3>
+<p>从上面的讨论我们可以知道，Rust本身虽然支持直接生成WASM程序，但是目前还有一些功能不稳定，例如<code>extern &quot;wasm&quot;</code>不稳定所以只能使用<code>extern &quot;C&quot;</code>。因此，在使用Rust编写WASM程序的过程中，往往更广泛使用的是一个叫<a href="https://crates.io/crates/wasm-bindgen"><code>wasm-bindgen</code></a>的库。这个库有其<a href="https://rustwasm.github.io/docs/wasm-bindgen/">官方文档</a>。</p>
+<p>最基础地，<code>wasm-bindgen</code>提供了一个宏，让我们直接定义需要导出的WASM函数：</p>
+<pre><code class="language-rust  ignore">use wasm_bindgen::prelude::*;
+
+#[wasm_bindgen]
+pub fn add(left: usize, right: usize) -&gt; usize {
+    left + right
+}</code></pre>
+<p>通过<code>#[wasm_bindgen]</code>这个宏，我们不需要再手动写之前很长的一大堆<code>#[no_mangle]</code>之类的东西。同时，这样的封装也有助于向后兼容。之后<code>extern &quot;wasm&quot;</code>稳定之后，只需要<code>wasm-bindgen</code>这个库内部改动一下，就可以适配新版本，而不需要开发者再手动修改了。</p>
+<p>此外，这个库还有一个很重要的目的，是解决了WASM与JavaScript交互的问题。以其README里的代码简单举个例子：</p>
+<pre><code class="language-rust  ignore">use wasm_bindgen::prelude::*;
+
+// Import the `window.alert` function from the Web.
+#[wasm_bindgen]
+extern &quot;C&quot; {
+    fn alert(s: &amp;str);
+}
+
+// Export a `greet` function from Rust to JavaScript, that alerts a
+// hello message.
+#[wasm_bindgen]
+pub fn greet(name: &amp;str) {
+    alert(&amp;format!(&quot;Hello, {}!&quot;, name));
+}</code></pre>
+<p>之前提到，不借助WASI，WASM的程序是没办法再不导入函数的情况下与系统交互的。而这里，我们使用<code>#[wasm_bindgen]</code>这个宏，就可以在WASM之中使用<code>window.alert</code>函数了！</p>
+<p>关于这个功能，之后在介绍WASM的函数导入与导出时，会再详细介绍。</p>
+<h2 id="c程序生成wasm"><a class="header" href="#c程序生成wasm">C程序生成WASM</a></h2>
+<p>毫无疑问，C/C++是目前使用平台最广的编程语言。因此，我们也可以将C/C++程序生成WASM。这里以C程序为例。</p>
+<h3 id="clang"><a class="header" href="#clang">Clang</a></h3>
+<p>第一种方案，与Rust类似，使用LLVM后端来做代码生成。因此，对应的编译器为Clang。</p>
+<p>我们编写一个简单的程序<code>add.c</code>：</p>
+<pre><code class="language-c">int add(int left, int right) __attribute__((export_name(&quot;add&quot;))) {
+    return left + right;
+}
+</code></pre>
+<p>使用如下命令生成WASM程序：</p>
+<pre><code class="language-shell">clang \
+  --target=wasm32-unknown-unknown -nostdlib \
+  -O3 \
+  -Wl,--no-entry -Wl,--export-dynamic \
+  -o adder.wasm \
+  adder.c
+</code></pre>
+<p>生成的<code>adder.wasm</code>也可以像Hello world一章中放在Web中或者后端程序中来检验。</p>
+<p>首先，我们使用了<code>--target=wasm32-unknown-unknown</code>来声明生成的目标平台，同时由于WASM程序不会使用系统的libc，也不会使用系统的crt等等，所以我们也需要使用<code>-nostdlib</code>来关闭对这些系统库的链接。</p>
+<p>此外，我们使用了<code>-Wl</code>选项。这个选项的意思是将后续的参数传递给链接器。这里我们传递给链接器的参数有<code>--no-entry</code>和<code>--export-all</code>。</p>
+<p>我们之前指出过，不使用WASI的WASM程序往往都是库程序，而不会直接作为独立的可执行程序。因此，也就不会有<code>_start</code>、<code>main</code>等entrypoint。所以我们需要传递给链接器<code>--no-entry</code>参数，让它别找entrypoint了。</p>
+<p>与Rust类似，我们也可以控制在WASM中导出的函数。当我们给链接器传递<a href="https://lld.llvm.org/WebAssembly.html#cmdoption-export-dynamic"><code>export-dynamic</code></a>参数时，在程序中以<a href="https://clang.llvm.org/docs/AttributeReference.html#export-name"><code>export_name</code></a>属性修饰的函数会被导出，而其余的函数是不会被导出的。在我们的例子中，使用了<code>__attribute__((export_name(&quot;add&quot;)))</code>，因此这个函数会以&quot;add&quot;的名字导出。</p>
+<h3 id="emscripten"><a class="header" href="#emscripten">Emscripten</a></h3>
+<p>之前了解WASM的开发者，想必一定听说过Emscripten的大名。Emscripten有悠久的历史，WASM的发展与其有很多很多的关系。简单来说，Emscripten就是提供了一整套工具链，让我们可以将C/C++程序编译为WASM程序。</p>
+<p>在早期，Emscripten的工作流程是，使用emcc将C/C++代码编译为LLVM IR，使用fastcomp将LLVM IR编译为asm.js语言（一种类似JavaScript的底层语言），然后使用我们之前提到的Binaryen工具链中的<code>asm2wasm</code>工具，将asm.js代码编译为WASM代码。这一过程详见<a href="https://9to5tutorial.com/i-don-t-know-how-binaryen-is-used-by-emscripten">I don't know how Binaryen is used by Emscripten</a>。</p>
+<p>而现在，Emscripten的工作流程是，使用emcc编译为LLVM IR之后，直接使用LLVM的wasm后端来生成wasm文件。Emscripten也和<code>wasm-bindgen</code>类似，提供了一些C/C++与系统交互的接口。</p>
+<p>Emscripten使用起来更为简单，我们编写<code>adder.c</code>:</p>
+<pre><code class="language-c">#include &lt;emscripten.h&gt;
+
+EMSCRIPTEN_KEEPALIVE int add(int left, int right) {
+    return left + right;
+}
+</code></pre>
+<p>随后使用</p>
+<pre><code class="language-shell">emcc adder.c -O3 -o adder.wasm
+</code></pre>
+<p>即可生成一个WASM程序。</p>
+<p>这里，我们就不再需要Clang的<code>export_name</code>属性，而是直接使用<code>EMSCRIPTEN_KEEPALIVE</code>宏即可。</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="wasm的使用"><a class="header" href="#wasm的使用">WASM的使用</a></h1>
+<p>在我们使用高级语言生成了WASM之后，毫无疑问接下来就是对WASM的使用。本章将主要讲述WASM的基本使用方法，而一些高级的使用方法在后续章节里会陆续介绍。</p>
+<p>总的来说，在我们通过WASM引擎使用WASM程序的过程中，WASM标准规范了三个语义阶段：</p>
+<ul>
+<li>
+<p>解码（Decoding）</p>
+<p>通常来说，WASM是以二进制格式分发的。因此，在使用WASM时，第一步就是将二进制格式的WASM解码成内存中的内部表示。</p>
+</li>
+<li>
+<p>验证（Validation）</p>
+<p>WASM本身是一个有类型的编程语言，除此之外也有许多保证正确性的约束。在解码之后，执行之前，WASM引擎会对WASM程序的正确性作验证。</p>
+</li>
+<li>
+<p>执行（Execution）</p>
+<p>在验证完正确性之后，WASM引擎会真正执行这个WASM程序。</p>
+</li>
+</ul>
+<h2 id="在web中使用"><a class="header" href="#在web中使用">在Web中使用</a></h2>
+<p>WASM程序目前最多的用途，就是在Web中使用了。本节就主要介绍几种在Web中使用WASM的常见方式。</p>
+<h3 id="基础方式"><a class="header" href="#基础方式">基础方式</a></h3>
+<p>在Hello world一章中，我们展示了在Web中使用WASM程序的基础方式：</p>
+<pre><code class="language-html">&lt;!doctype html&gt;
+&lt;html&gt;
+  &lt;head&gt;
+    &lt;meta charset=&quot;utf-8&quot;&gt;
+    &lt;title&gt;WASM Test&lt;/title&gt;
+  &lt;/head&gt;
+
+  &lt;body&gt;
+    &lt;script&gt;
+      WebAssembly.instantiateStreaming(fetch(&quot;./adder.wasm&quot;))
+        .then(obj =&gt; {
+            console.log(obj.instance.exports.add(1, 2));
+        });
+    &lt;/script&gt;
+  &lt;/body&gt;
+&lt;/html&gt;
+</code></pre>
+<p>在这里，我们调用了内置的WebAssembly模块的<a href="https://developer.mozilla.org/en-US/docs/WebAssembly/JavaScript_interface/instantiateStreaming"><code>instantiateStreaming</code></a>函数。这个函数是目前最主要使用的引入WASM程序的接口。同时也从这个的使用方式看出来，当我们需要引入WASM模块时，必须要<strong>手动请求</strong>这个资源，例如使用<code>fetch</code>等函数；此外，这个函数是异步的，说明目前引入WASM模块时，也都是异步的请求。</p>
+<p>当我们查看这个函数的API文档时，会发现其接收第二个参数<code>importObject</code>，这个暂时不细讲，之后讲到WASM函数的导入与导出时再详细解释。</p>
+<p>此外，这个函数实际上做了之前提到的WASM语义阶段中的「解码」与「验证」两个步骤（严格来说，也做了「执行」步骤中的「实例化」一步，不过不重要）。</p>
+<p>在使用<code>instantiateStreaming</code>函数引入WASM之后，我们可以通过<code>obj.instance.exports.add</code>来访问我们之前导出的<code>add</code>函数。</p>
+<h3 id="es-module形式导入"><a class="header" href="#es-module形式导入">ES Module形式导入</a></h3>
+<p>在JavaScript来到新时代之后，ES Module让JavaScript多文件组织变得异常清晰与简便。那我们多么希望能够这样使用WASM模块：</p>
+<pre><code class="language-javascript">import { add } from &quot;./adder.wasm&quot;;
+
+console.log(add(1, 2));
+</code></pre>
+<p>如果WASM模块也能以ES Module的形式来导入，这该多好啊！</p>
+<p>事实上，这个功能目前还是一个提案<a href="https://github.com/WebAssembly/esm-integration">ES Module Integration Proposal for WebAssembly</a>，没有被广泛地实现。目前，实现这个功能还有一些阻碍，例如，之前我们提到，对WASM的引入都是异步的，因此如果要全局直接<code>import</code>，势必要Top-level Await，而这个也没有很好地实现。</p>
+<p>但是，尽管目前没有普遍实现，一个好消息是：<a href="https://webpack.js.org/configuration/module/#ruletype">Webpack支持以ES Module的形式导入WASM程序</a>！具体的代码可以参考本仓库的<a href="https://github.com/Evian-Zhang/wasm-tutorial/tree/main/code/04/web-webpack">web-webpack</a>目录，其中的代码参考了<a href="https://github.com/ballercat/minimal-webpack5-wasm-demo">ballercat/minimal-webpack5-wasm-demo</a>。</p>
+<p>简单而言，我们只需要在<code>webpack.config.js</code>中加入下面一段代码：</p>
+<pre><code class="language-javascript">module.exports = {
+  // ...
+  experiments: {
+    asyncWebAssembly: true,
+  },
+  // ...
+};
+</code></pre>
+<p>就可以以ES Module的方式引入WASM程序啦！</p>
+<h2 id="在通用程序中使用-1"><a class="header" href="#在通用程序中使用-1">在通用程序中使用</a></h2>
+<p>除了在Web中使用，由于其安全性与通用型，WASM目前也越来越多地在通用程序中作为库被使用。目前最常用的两个辅助库是<a href="https://wasmer.io">wasmer</a>和<a href="https://wasmtime.dev">wasmtime</a>。</p>
+<p>wasmer目前支持的编程语言包括Rust, C/C++, JavaScript, Go, Python, PHP, Ruby, OCaml和Swift等。wasmtime目前支持的编程语言包括Rust, C/C++, Python, C#, Go, Ruby等。这里以Rust语言为例，介绍如何分别通过这两个库，在Rust程序中使用WASM库提供的函数。对于其他通用编程语言，这两个工具的官网上都有详细的指导，并且过程和原理与Rust语言并没有太大的差别。并且对于C/C++来说，WASM官方也正在推进统一的<a href="https://github.com/webassembly/wasm-c-api">WebAssembly C and C++ API</a>，不过目前还不成熟。</p>
+<h3 id="使用wasmer"><a class="header" href="#使用wasmer">使用wasmer</a></h3>
+<p>在Rust中使用wasmer的方式，在Hello world一章中已经介绍了。也就是在依赖中声明<a href="https://crates.io/crates/wasmer">wasmer</a>这个库之后，编写如下代码：</p>
+<pre><code class="language-rust  ignore">use anyhow::Result;
+use std::fs;
+use wasmer::{Imports, Instance, Module, Store, TypedFunction};
+
+fn main() -&gt; Result&lt;()&gt; {
+    let wasm_bytes = fs::read(&quot;./adder.wasm&quot;)?;
+    let mut store = Store::default();
+    let module = Module::new(&amp;store, wasm_bytes)?;
+    let imports = Imports::default();
+    let instance = Instance::new(&amp;mut store, &amp;module, &amp;imports)?;
+    let add: TypedFunction&lt;(u32, u32), u32&gt; =
+        instance.exports.get_typed_function(&amp;mut store, &quot;add&quot;)?;
+    let sum = add.call(&amp;mut store, 1, 2)?;
+    println!(&quot;Sum is {sum}&quot;);
+    Ok(())
+}</code></pre>
+<p>下面我们就解释一下这代码中一些主要的语句的含义。</p>
+<h4 id="读入程序"><a class="header" href="#读入程序">读入程序</a></h4>
+<p>首先，我们通过Rust标准库，将WASM程序的字节码读入了内存<code>wasm_bytes</code>中，此时<code>wasm_bytes</code>的类型是<code>Vec&lt;u8&gt;</code>。这是因为我们后续在使用<code>Module::new</code>解析WASM时，会要求参数满足<code>AsRef&lt;[u8]&gt;</code>，因此我们一般都是直接读入内存即可。</p>
+<h4 id="store"><a class="header" href="#store">Store</a></h4>
+<p>随后，我们创建了一个默认的<code>Store</code>类型变量。Store实际上是一个通用的<a href="https://webassembly.github.io/spec/core/exec/runtime.html#store">WASM中的概念</a>，但是放在Rust的代码里讲，就直观很多。</p>
+<p>我们知道，Rust是一个非常强调所有权和生命周期的编程语言。在一个WASM程序运行的过程中，会有很多全局的状态。例如，WASM程序中的函数本身，其生命周期理应是全局的。用来托管这些全局状态的，就称为Store。</p>
+<p>除此之外，在wasmer中，Store还负责管理引擎。所谓引擎，就是指我们如何将WASM的内部表示，转译成原生的机器指令。例如：</p>
+<pre><code class="language-rust  ignore">use wasmer::{Store, EngineBuilder};
+use wasmer_compiler_llvm::LLVM;
+
+let compiler = LLVM::new();
+let mut store = Store::new(compiler);</code></pre>
+<p>上述代码就是创建了一个，通过LLVM引擎来将WASM的内部表示转译成原生指令的Store。</p>
+<p>LLVM引擎生成的原生字节码，目前是优化程度最高的，适合用于生产环境。而<code>Store::default</code>默认使用的是用Rust原生开发的，LLVM的平替<a href="https://github.com/bytecodealliance/wasmtime/tree/main/cranelift">cranelift</a>。这个引擎在转译时间和优化程度之间达到平衡，适用于开发环境。</p>
+<h4 id="module"><a class="header" href="#module">Module</a></h4>
+<p>在之后详细解释WASM代码的章节中我们会了解到，一个WASM程序就是一个module。因此，我们之前提到的「WASM的内部表示」，实际上就是这样一个<code>Module</code>类型的变量。可以看到，这个变量创建的过程中，需要<code>store</code>作为参数。这是因为需要其需要引擎提供加持，所以要从store中提取目前的引擎。</p>
+<p>创建<code>Module</code>类型的变量，就完成了之前提到的WASM语义阶段中的「解码」和「验证」两个阶段。</p>
+<h4 id="imports"><a class="header" href="#imports">Imports</a></h4>
+<p>这个变量在与WASM的交互过程中必不可少，但目前我们暂时不需要了解，之后的章节会介绍。</p>
+<h4 id="instance"><a class="header" href="#instance">Instance</a></h4>
+<p>当我们创建<code>Instance</code>类型的变量时，就是真正执行WASM程序的过程。创建这个变量，就会初始化WASM程序，形成一个WASM实例。也就是说，我们WASM程序从现在开始正式进入执行阶段。</p>
+<h4 id="调用wasm导出函数"><a class="header" href="#调用wasm导出函数">调用WASM导出函数</a></h4>
+<p>接下来，我们使用了<code>get_typed_function</code>来获得我们在WASM程序中导出的&quot;add&quot;函数，然后使用<code>call</code>来调用这个函数。我们知道，Rust是强类型的语言，所以需要提供这个函数的类型信息。<code>TypedFunction&lt;(u32, u32), u32&gt;</code>就提示编译器，这个<code>add</code>函数接收两个<code>u32</code>类型的参数，返回一个<code>u32</code>类型的值。</p>
+<p>这里值得指出，为什么我们在生成WASM的时候，使用的是<code>usize</code>，而使用WASM时，使用的是<code>u32</code>呢？这是因为，在生成WASM的时候，Rust程序的目标平台为<code>wasm32-unknown-unknown</code>，是32位平台，所以<code>usize</code>自动成为了<code>u32</code>；而在使用WASM的时候，我们是要编译生成原生的Rust程序，例如目标平台为<code>x86_64-unknown-linux-gnu</code>。因此，<code>usize</code>是64位，我们需要手动使用<code>u32</code>才能保证类型信息是正确的。</p>
+<h3 id="使用wasmtime"><a class="header" href="#使用wasmtime">使用wasmtime</a></h3>
+<p>wasmtime与wasmer类似，也是一个可以用作WASM引擎的库。我们声明<a href="https://crates.io/crates/wasmtime">wasmtime</a>之后，编写如下代码：</p>
+<pre><code class="language-rust  ignore">use anyhow::Result;
+use std::fs;
+use wasmtime::*;
+
+fn main() -&gt; Result&lt;()&gt; {
+    let wasm_bytes = fs::read(&quot;./adder.wasm&quot;)?;
+    let engine = Engine::default();
+    let mut store = Store::new(&amp;engine, ());
+    let module = Module::new(&amp;engine, wasm_bytes)?;
+    let instance = Instance::new(&amp;mut store, &amp;module, &amp;[])?;
+    let add = instance.get_typed_func::&lt;(u32, u32), u32&gt;(&amp;mut store, &quot;add&quot;)?;
+    let sum = add.call(&amp;mut store, (1, 2))?;
+    println!(&quot;Sum is {sum}&quot;);
+    Ok(())
+}</code></pre>
+<p>上述代码与之前wasmer的代码做了一样的事。</p>
+<p>关于上述代码，大部分是与wasmer中的类似，其中，与wasmer的代码最大的不同，是<code>Store::new</code>创建时的第二个参数与<code>Instance::new</code>创建时的第三个参数。这两个参数实际上对应的是wasmer中的<code>Imports</code>，因此在这里暂时不作细讲，之后介绍WASM函数的导入与导出时再详细介绍。</p>
+<p>此外，目前wasmtime主要使用的是cranelift来将WASM内部表示生成为原生机器码，而不像wasmer一样提供LLVM等方式。</p>
+<h3 id="总结"><a class="header" href="#总结">总结</a></h3>
+<p>总结而言，在上述通用程序的使用中，我们可以发现，对WASM的解码、验证与执行，都是<strong>运行时</strong>执行的，而非编译时或链接时执行的。这与我们传统的使用静态链接库的方式不一样，更类似于我们使用动态链接库。这是因为，我们将WASM作为库在通用程序中使用的时候，往往是考虑其较高的安全性与平台的支持性，因此大部分情况下，这些WASM程序都是作为插件系统来使用。而插件系统的特点，就是在运行时加载、执行，因此目前相关的API设计才是如此。</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="基本语法"><a class="header" href="#基本语法">基本语法</a></h1>
+<p>在深入学习了如何生成与使用WASM程序之后，我们已经有了许多模板，比如Rust生成WASM的，比如Web使用WASM的。因此，接下来我们就可以完全关注在WASM代码本身，一切新学习到的知识都可以通过之前拥有的模板来验证、测试。</p>
+<p>从本章开始，我们将学习WASM的基本语法。在本章中，我将介绍一些最基础的WASM的语法。这些基础知识往往比较零散，之间的联系并不是十分紧密，但如果单独一章介绍一个的话，又不足以支撑篇幅。因此，本章就将那些基础的、小块儿的知识放在一起来介绍。</p>
+<p>我们仍然以Hello world一章中最基本的程序<code>library.wat</code>为例：</p>
+<pre><code class="language-wasm">(module ;; Define a module
+    ;; Define a function with name `add`, two parameters of type i32, and returns i32
+    (func $add (param $left i32) (param $right i32) (result i32)
+        local.get $left ;; Push parameter `left` to stack
+        local.get $right ;; Push parameter `right` to stack
+        i32.add ;; Consume two values at stack top, and push the sum to stack
+    )
+    (export &quot;add&quot; (func $add)) ;; Export this function with symbol &quot;add&quot;
+)
+</code></pre>
+<h2 id="注释"><a class="header" href="#注释">注释</a></h2>
+<p>首先，我们第一眼看这个代码，就可以立刻明白，在WASM中，以两个分号<code>;;</code>打头的是注释。当然，C语言中的块注释<code>/* ... */</code>，WASM中也有类似的<code>(; ... ;)</code>：</p>
+<pre><code class="language-wasm">(module (; This is comment ;))
+</code></pre>
+<p>因此，在仔细研究WASM的语法结构的时候，可以在脑中直接把注释部分忽略，也就是下面这个样子：</p>
+<pre><code class="language-wasm">(module
+    (func $add (param $left i32) (param $right i32) (result i32)
+        local.get $left
+        local.get $right
+        i32.add
+    )
+    (export &quot;add&quot; (func $add))
+)
+</code></pre>
+<h2 id="s表达式"><a class="header" href="#s表达式">S表达式</a></h2>
+<p>熟悉Lisp语言的开发者在看到WASM的文本格式代码时，肯定第一眼就会说，这不就是S表达式（S-Expression）嘛！没错，WASM的文本格式，其整体而言是以S表达式的形式组织的。</p>
+<p>严格来说，一个S表达式的定义为：</p>
+<ul>
+<li>一个原子元素，或</li>
+<li><code>(x y)</code>，其中<code>x</code>和<code>y</code>都是S表达式</li>
+</ul>
+<p>这种格式非常适合表示树结构，在编程语言中，非常常见的树结构就是抽象语法树。例如，在Lisp中：</p>
+<pre><code class="language-lisp">(* 5 (+ 7 3))
+</code></pre>
+<p>意思就是<code>5 * (7 + 3)</code>。通过S表达式，Lisp的代码可以轻松地解析为抽象语法树。</p>
+<p>那我们就以S表达式的眼光，来看看我们的WASM代码的结构：</p>
+<ul>
+<li>从最外层来看，是一个<code>module</code>，其有两个组件：一个<code>func</code>，一个<code>export</code>。
+<ul>
+<li>对于<code>func</code>来说，其有三个子组件：两个<code>param</code>和一个<code>result</code>。其余部分均可以看做原子元素</li>
+<li>对于<code>export</code>来说，其有一个子组件<code>func</code>。</li>
+</ul>
+</li>
+</ul>
+<p>因此，从树结构的角度来理解的话，这段WASM代码，其最大深度为3，也就是可以看做这种形状：</p>
+<pre><code class="language-plaintext">module
+|------func
+|      |-------param
+|      |-------param
+|      |-------result
+|
+|------export
+       |-------func
+</code></pre>
+<h2 id="模块"><a class="header" href="#模块">模块</a></h2>
+<p>在WASM代码的顶层，是<code>module</code>。WASM规定，一个WASM程序对应一个WASM模块。因此，在我们的WASM代码中，顶层永远是<code>module</code>，并且不允许出现多个<code>module</code>。</p>
+<p>事实上，在我们之前通过Rust使用WASM的过程中，经常出现<code>Module</code>类型，对应一个WASM模块，这就是对应的其代码中的根结点<code>module</code>。</p>
+<h2 id="函数"><a class="header" href="#函数">函数</a></h2>
+<p>接下来，我们就好好研究一下WASM的函数是怎么写的。在WASM中，一个模块中可以有任意多个函数，而下面我们研究研究之前代码里的函数</p>
+<pre><code class="language-wasm">(func $add (param $left i32) (param $right i32) (result i32)
+    local.get $left
+    local.get $right
+    i32.add
+)
+</code></pre>
+<h3 id="标识符"><a class="header" href="#标识符">标识符</a></h3>
+<p>首先，我们看到，紧跟在<code>func</code>后面的，是<code>$add</code>。在WASM中，以<code>$</code>打头的称为标识符，它和我们在高级编程语言里遇到的标识符有着同样的作用。也就是说，<code>func $add</code>就代表这个函数名字叫add。</p>
+<p>有两点需要注意的。首先，标识符不是必须的。标识符的存在，只是为了方便后续对这个元素的引用。例如，我们可以看到，在我们的WASM代码中，最后的<code>export</code>一段，引用了我们之前定义的函数<code>func $add</code>。因此，我们才必须给这个函数一个名字<code>$add</code>。如果我们在整个代码中，不需要引用这个函数，那我们无需给这个函数名字，可以直接写成</p>
+<pre><code class="language-wasm">(func (param $left i32) (param $right i32) (result i32)
+    local.get $left
+    local.get $right
+    i32.add
+)
+</code></pre>
+<p>第二点，标识符不是必须出现在二进制格式中的。和高级编程语言一样，标识符只是方便开发者进行编程。而一个标识符究竟会不会出现在生成的二进制镜像中，这取决于开发者的意愿。如果我们想将这个标识符导出，那么这个标识符就可以以字符串的形式出现在二进制镜像中。我们WASM代码的最后一段的<code>export</code>就做了这个事。</p>
+<p>除了使用标识符以外，我们还可以用索引来引用WASM中的元素。我们提到，二进制镜像中不会包含标识符，只会包含开发者手动指定的导出符号。那么，如果我们将一个文本格式的WASM程序转译成二进制格式，然后再转译回文本格式，那么标识符会变成什么呢？</p>
+<p>我们可以手写一个<code>index.wat</code>：</p>
+<pre><code class="language-wasm">(module
+    (func $add (param $left i32) (param $right i32) (result i32)
+        local.get $left
+        local.get $right
+        i32.add
+    )
+    (func $sub (param $left i32) (param $right i32) (result i32)
+        local.get $left
+        local.get $right
+        i32.sub
+    )
+    (export &quot;sub&quot; (func $sub))
+)
+</code></pre>
+<p>这里声明了两个函数，导出的是第二个函数<code>$sub</code>，因此更方便我们理解索引结构。我们使用如下指令：</p>
+<pre><code class="language-shell">wat2wasm index.wat -o index.wasm
+wasm2wat index.wasm -o index2.wat
+</code></pre>
+<p>我们查看<code>index2.wat</code>的内容，会发现是：</p>
+<pre><code class="language-wasm">(module
+  (type (;0;) (func (param i32 i32) (result i32)))
+  (func (;0;) (type 0) (param i32 i32) (result i32)
+    local.get 0
+    local.get 1
+    i32.add)
+  (func (;1;) (type 0) (param i32 i32) (result i32)
+    local.get 0
+    local.get 1
+    i32.sub)
+  (export &quot;sub&quot; (func 1)))
+</code></pre>
+<p>首先先不用管<code>type</code>相关的语句，这之后马上就会提到。我们发现，原先在函数定义时的标识符<code>$add</code>和<code>$sub</code>，由于没有记录到二进制镜像中，因此在还原的时候，被替换为了块注释<code>(;0;)</code>和<code>(;1;)</code>。这些注释相当于空字符，不会对语义产生影响，所以我们可以忽略。</p>
+<p>但是，在最后的导出语句中，使用了<code>(func 1)</code>来替代<code>(func $sub)</code>。这是因为，在WASM中，同级同属性的节点会自动拥有从0开始的索引。说得直白一点，这个WASM程序有两个函数，因此自动地，第一个函数有索引值0，第二个函数有索引值1。我们可以直接通过索引值来引用这个函数，所以<code>export</code>语句就可以通过<code>(func 1)</code>引用第二个函数，也就是我们先前定义的<code>sub</code>。</p>
+<p>除了函数之外，几乎所有的元素都会有其索引值，我们也可以在这个代码中看到<code>(type 0)</code>、<code>(local.get 0)</code>等语句，这就是索引值的使用。</p>
+<h3 id="签名"><a class="header" href="#签名">签名</a></h3>
+<p>在<code>func $add</code>之后，是声明这个函数的参数、返回值类型。这里我们可以很直观地看到，这个函数接收两个<code>i32</code>类型的参数，返回一个<code>i32</code>类型的值。一个函数的参数+返回值类型，称为这个函数的签名（Signature）。</p>
+<p>对于参数来说，正如我们之前提到的，如果一个参数不需要用名字去引用它，就可以省略相应的标识符，例如<code>(param i32)</code>。如果一个函数的参数都没有标识符，我们有一个语法糖：</p>
+<pre><code class="language-wasm">(func $add (param i32 i32) (result i32)
+    ;; ...
+)
+</code></pre>
+<p>此外，我们也可以额外加一个<code>type</code>语句，用来double check一下这个函数的签名的正确性（只会在生成二进制程序时被检查）：</p>
+<pre><code class="language-wasm">(module
+    (type $add_type (func (param i32 i32) (result i32)))
+    (func $add (type $add_type) (param $left i32) (param $right i32) (result i32)
+        local.get $left
+        local.get $right
+        i32.add
+    )
+    (export &quot;add&quot; (func $add))
+)
+</code></pre>
+<p>这也解释了我们在之前，将生成的二进制程序还原成文本形式时出现的<code>type</code>语句。</p>
+<h3 id="栈机"><a class="header" href="#栈机">栈机</a></h3>
+<p>我们接下来就重点关注其函数体，也就是其中的指令部分：两个<code>local.get</code>和一个<code>i32.add</code>。</p>
+<p>在了解具体指令之前，我们首先需要知道「栈机」（Stack machine）和「寄存器机」（Register machine）。</p>
+<h4 id="计算模型"><a class="header" href="#计算模型">计算模型</a></h4>
+<p>对于一个基于虚拟机的编程语言（例如Java基于JVM，Rust、C/C++可以基于WASM），所谓的「虚拟机」就是指，输入其自定义的指令字节码（如JVM字节码、WASM二进制表示等），虚拟机将根据指令字节码，执行相应的指令。在我们实现这样一个虚拟机的时候，往往需要设计一种「计算模型」（Computational model）。在虚拟机的常见实现中，主要分为两种计算模型：「栈机」和「寄存器机」。</p>
+<p>例如，我们希望我们的虚拟机能够实现加法<code>add</code>指令：</p>
+<ul>
+<li>
+<p>对于栈机而言，我们需要在整个执行过程中，维护一个操作数栈。<code>add</code>指令不需要显式给出参数。我们若想执行加法功能，例如实现<code>2 + 3</code>，需要：</p>
+<ol>
+<li>将数字2和3压入栈中</li>
+<li>调用<code>add</code>指令</li>
+<li>虚拟机从栈上弹出两个数字，也就是2和3</li>
+<li>将其相加</li>
+<li>把结果5压入栈中</li>
+</ol>
+</li>
+<li>
+<p>对于寄存器机而言，我们需要维护一系列寄存器。<code>add</code>指令需要三个寄存器编号作为参数。我们若想执行<code>2 + 3</code>，需要：</p>
+<ol>
+<li>先将2放入0号寄存器，然后将3放入1号寄存器，再将2号寄存器作为返回值存放的寄存器</li>
+<li>将这3个寄存器编号，也就是0、1和2作为参数，调用<code>add</code>指令</li>
+<li>虚拟机去相应的寄存器中寻找值</li>
+<li>将其相加</li>
+<li>把结果5存到2号寄存器中去</li>
+</ol>
+</li>
+</ul>
+<p>熟悉Intel的汇编以及调用约定的开发者想必会有一些共鸣，从某种意义上，32位x86的调用约定类似一种栈机（但其返回值不通过栈传递），而64位AMD64的调用约定类似一种寄存器机。</p>
+<p>此外，还需要注意的是，这里讲的栈机中的栈，和我们真正编程过程中使用的，进程的栈并不是同一个东西。进程的栈在执行过程中，还要把什么返回地址、帧指针之类的全压到栈上去，是一种混合了「调用栈」与「操作数栈」的模型。而这里讲的栈机的栈，仅仅是用来传递参数和返回值的。</p>
+<p>当然，还有一点值得指出。无论是栈机还是寄存器机，都只是一种「模型」。也就是说，通过这种模型，可以很好地定义其执行的方式、顺序，但真正的虚拟机实现里，是不一定需要维护一个真实的栈或者一系列寄存器的，可以通过优化去做更多的事。</p>
+<h4 id="wasm栈机"><a class="header" href="#wasm栈机">WASM栈机</a></h4>
+<p>WASM大致是一个栈机（但实际上，WASM的局部变量机制导致它不是一个真正的栈机，详情可见<a href="http://troubles.md/wasm-is-not-a-stack-machine/">WebAssembly Is Not a Stack Machine</a>），目前我们可以粗略地用栈机的眼光来理解WASM的函数。</p>
+<p>回到我们之前的add函数。从栈机的角度来简单地解释一下这个函数的意思：</p>
+<ul>
+<li>
+<p><code>local.get $left</code></p>
+<p>将第一个参数压栈</p>
+</li>
+<li>
+<p><code>local.get $right</code></p>
+<p>将第二个参数压栈</p>
+</li>
+<li>
+<p><code>i32.add</code></p>
+<p>从栈上弹出两个参数，将其求和，然后将结果压栈</p>
+</li>
+</ul>
+<p>我们之前声明了<code>add</code>函数，可以注意到，我们说了它有一个<code>i32</code>类型的返回值。然后在这个函数结束的时候，它的栈上正好还剩这一个结果。这个最终剩在栈上的值，就会成为这个函数的返回值。这种栈的「平衡性」，也是WASM引擎的「验证」阶段可以静态完成的一个重要的事。</p>
+<p>但我们在写WASM的过程中，有时候很难保证，函数结束的时候，恰好栈上剩下的值的个数等于返回值的个数。有可能有一些中间变量也在栈上，只不过不在栈顶。为了保证栈的平衡性，我们可以使用<code>return</code>或者<code>drop</code>指令。<code>return</code>指令首先会查看当前函数返回值的个数，然后从栈上弹出相应个数个值作为返回值，剩下的全部丢掉。而<code>drop</code>指令则一般用在没有返回值的函数中，直接将当前栈上所有值丢掉。</p>
+<p>此外，有一个非常重要的，值得注意的事：参数传递的顺序。我们可以发现，与x86不同，我们是<strong>从左往右</strong>压栈。也就是说，接下来的指令的第一个参数先压栈，最后一个参数最后再压栈。这是值得注意的。</p>
+<p>另外，我们需要强调的是，尽管在上述指令的解释中，我们用了「压栈」，但实际上这些指令本身是不会压栈的，也没有一个指令专门是「压栈」。只不过是，WASM在执行每条指令时，将根据这条指令的特性，调整栈。例如，WASM在执行时，发现这条指令是<code>local.get</code>，它不接受参数，返回一个值，因此将这条执行执行后的值放到栈上；在执行到<code>i32.add</code>时，发现这条指令接受两个参数，返回一个值，因此把栈上弹两个值出来，作为参数，执行后把结果存到栈上。</p>
+<p>在真正书写WASM的过程中，我们有一个语法糖（一般被称为折叠格式（folded form））：</p>
+<pre><code class="language-wasm">(func $add (param $left i32) (param $right i32) (result i32)
+    (i32.add (local.get $left) (local.get $right))
+)
+</code></pre>
+<p>这个语法一看就和我们正常的高级语言的语法类似了，但是这是个语法糖，其底层还是会变成之前的栈机形式，不过这种写法更利于人类阅读和书写。</p>
+<h3 id="指令"><a class="header" href="#指令">指令</a></h3>
+<p>在WASM中，大部分的指令都分为两个部分，前半部分表示指令所属的类别，后半部分表示指令的内容。例如，之前我们遇到的<code>local.get</code>，其类别属于<code>local</code>，内容是获取local的值；<code>i32.add</code>，类别属于<code>i32</code>，内容是将两个i32的值相加。</p>
+<p>WASM的指令数目不多，和AArch64类似，基本属于精简指令集了，不会有非常复杂的指令。具体的指令列表可以参考官方文档<a href="https://webassembly.github.io/spec/core/appendix/index-instructions.html">Index of Instructions</a>。在本系列中，不会集中地讲解指令集，而是会在需要的地方，详细解释与某些概念息息相关的指令。</p>
+<h3 id="基本的数字类型"><a class="header" href="#基本的数字类型">基本的数字类型</a></h3>
+<p>WASM最常做的事，就是进行大量的数字相关的计算。在WASM中，有以下四个数字类型：</p>
+<ul>
+<li>
+<p><code>i32</code></p>
+<p>32位整数类型</p>
+</li>
+<li>
+<p><code>i64</code></p>
+<p>64位整数类型</p>
+</li>
+<li>
+<p><code>f32</code></p>
+<p>32位单精度浮点型</p>
+</li>
+<li>
+<p><code>f64</code></p>
+<p>64位双精度浮点型</p>
+</li>
+</ul>
+<p>熟悉底层，特别是LLVM IR的开发者应该更方便理解这里的概念，因为和LLVM IR类似，WASM中的整型有无符号，并不是记录在类型信息中，而是根据不同的指令加以区别。对于了解高级语言的开发者来说，如Rust中，整型往往需要有符号信息（如<code>usize</code>和<code>isize</code>），但是在底层中，我们可以举两个例子。</p>
+<h4 id="有无符号结果一致"><a class="header" href="#有无符号结果一致">有无符号结果一致</a></h4>
+<p>在二进制层面，有符号整型往往是通过「补码」这种编码格式来存储，而无符号整型则直接原封不动存储就行。关于这种编码格式，各种本科的基础课里已经有了很多讲解。这里我们只需要知道一件事：</p>
+<p>我们设计的编码格式非常强大，强大到：我们通过CPU的加法器将两个寄存器的值a和b相加，得到c：</p>
+<ul>
+<li>如果将a和b看作有符号整数的编码，那么将c按照有符号整数解码，就是之前两个有符号整数相加的和</li>
+<li>如果将a和b看作无符号整数的编码，那么将c按照无符号整数解码，就是之前两个无符号整数相加的和</li>
+</ul>
+<p>也就是说，我们不需要有符号整数一个加法器、无符号整数一个加法器，而是一个加法器，就可以解决所有整型相加的问题，并且其有无符号，与底层CPU系统不再有关。</p>
+<p>因此，在WASM层面也是一致的。这里的<code>i32</code>、<code>i64</code>的<code>i</code>，只是整数integer的代表，不代表有无符号。当我们定义了add函数：</p>
+<pre><code class="language-wasm">(func $add (param $left i32) (param $right i32) (result i32)
+    local.get $left
+    local.get $right
+    i32.add
+)
+</code></pre>
+<p><code>i32.add</code>指令也不再指定符号信息，因为与底层无关。而其究竟有无符号，是根据使用这个的高级语言来决定的。在Rust层面，我们既可以将其看作一个<code>(i32, i32) -&gt; i32</code>的函数，也可以看做一个<code>(u32, u32) -&gt; u32</code>的函数。</p>
+<h4 id="有无符号结果不一致"><a class="header" href="#有无符号结果不一致">有无符号结果不一致</a></h4>
+<p>在加法层面，有无符号结果是一致的。然而有些指令则不一样。例如在整数除法时，根据符号不同，我们需要将结果按不同的方式向上或者向下取整。</p>
+<p>因此，在WASM指令集层面，提供了两个指令<code>i32.idiv_u</code>和<code>i32.idiv_s</code>，分别提供无符号整数除法和有符号整数除法。无符号整数除法将两个操作数<strong>看做</strong>无符号整数，有符号整数除法则是<strong>看做</strong>有符号整数。</p>
+<p>从这里，我们就可以看出，在WASM层面，与LLVM IR类似，整型变量有无符号，不存储在类型信息中，而是根据指令的不同来决定的。</p>
+<h2 id="导出"><a class="header" href="#导出">导出</a></h2>
+<p>在最后，我们使用了</p>
+<pre><code class="language-wasm">(export &quot;add&quot; (func $add))
+</code></pre>
+<p>来表示，我们要导出之前声明的一个叫<code>$add</code>的函数，并且它的导出的名字是&quot;add&quot;。事实上，还有一种更简单的写法：</p>
+<pre><code class="language-wasm">(module
+    (func (export &quot;add&quot;) (param $left i32) (param $right i32) (result i32)
+        local.get $left
+        local.get $right
+        i32.add
+    )
+)
+</code></pre>
+<p>将最后一个export语句直接移到函数的定义中。这样的话，就不需要在后面引用这个函数，从而不需要再给这个函数命名了，所以我们自然也省去了<code>$add</code>这个标识符。</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="变量与常量"><a class="header" href="#变量与常量">变量与常量</a></h1>
+<p>在讲基本语法时，我们故意地忽略了函数的参数、返回值相关的深入知识。在这一章里，我们将连同这些知识一起，统一介绍在WASM中的变量与常量。</p>
+<h2 id="局部变量"><a class="header" href="#局部变量">局部变量</a></h2>
+<p>我们之前提到过，在<a href="http://troubles.md/wasm-is-not-a-stack-machine/">WebAssembly Is Not a Stack Machine</a>一文中指出，WASM的局部变量设计让它不是一个真正的栈机，甚至可以说是一个寄存器机。同时，这也让WASM代码很难变成SSA形式，从而难以利用SSA的各种优化。那么，我们来看看，WASM的局部变量究竟是如何设计的。</p>
+<p>在WASM中，我们可以这样声明一个函数：</p>
+<pre><code class="language-wasm">(func (param $a i32) (param $b i32) (result i32)
+    (local $c i32)
+    ;; ...
+)
+</code></pre>
+<p>在这里，我们定义了一个函数，它接受两个<code>i32</code>类型的参数，返回一个<code>i32</code>类型的值，并且主动声明了一个<code>i32</code>类型的局部变量。事实上，与C语言类似，除了我们主动声明的局部变量外，函数的参数也可以看做局部变量。也就是说，这个函数的局部变量，是<code>$a</code>、<code>$b</code>和<code>$c</code>。因此，我们之前提到，除了可以通过标识符来引用WASM的元素之外，也可以通过每个元素自带的编号来引用。而对于局部变量来说，其编号是从参数开始编的。也就是说，对于我们这个函数来说，参数<code>$a</code>的编号是0，而局部变量<code>$c</code>的编号是2。</p>
+<p>对于局部变量，我们最常做的两个操作是<code>local.get</code>和<code>local.set</code>。例如：</p>
+<pre><code class="language-wasm">local.get $a
+</code></pre>
+<p>将返回局部变量<code>$a</code>的值，也就是说往栈上压入一个<code>$a</code>的值。</p>
+<pre><code class="language-wasm">local.set $a
+</code></pre>
+<p>则是将栈顶元素弹出，并赋值给局部变量<code>$a</code>。</p>
+<p>在我们使用高级语言编程的过程中，一个常见的编程错误是使用未初始化的变量。例如，当我们在Rust中写下如下语句：</p>
+<pre><code class="language-rust  ignore">fn foo() {
+    let a: i32;
+    let b = a - 1;
+}</code></pre>
+<p>会报错：</p>
+<pre><code class="language-plaintext">error[E0381]: used binding `a` isn't initialized
+ --&gt; src/lib.rs:3:13
+  |
+2 |     let a: i32;
+  |         - binding declared here but left uninitialized
+3 |     let b = a - 1;
+  |             ^ `a` used here but it isn't initialized
+  |
+help: consider assigning a value
+  |
+2 |     let a: i32 = 0;
+  |                +++
+</code></pre>
+<p>很显然，使用未初始化的变量会造成程序错误。</p>
+<p>在WASM中，我们会遇到同样的问题吗？我们可以编写如下程序：</p>
+<pre><code class="language-wasm">(module
+    (func (export &quot;local_initialize&quot;) (result i32)
+        (local $dummy i32)
+        local.get $dummy
+    )
+)
+</code></pre>
+<p>我们并没有手动给<code>$dummy</code>变量赋值，那么我们直接获取它的值会发生什么呢？我们可以把这个程序放在各种WASM引擎中运行，会发现这个函数顺利通过了「验证」阶段，并且执行的结果是0。</p>
+<p>事实上，在WASM的核心标准中（<a href="https://webassembly.github.io/spec/core/exec/instructions.html#invocation-of-function-address-a">这一段</a>）规定了，在调用一个函数的时候，它的局部变量是已经被初始化了的。而对于我们常用的数字类型来说，其默认值就是0。因此，在WASM中，不会出现使用未初始化的局部变量的问题（顺便一提，在<a href="https://github.com/WebAssembly/function-references">Function Reference Types Proposal</a>这个提案中引入了非Null的引用类型，这种类型就没有默认值了）。</p>
+<h3 id="寄存器机"><a class="header" href="#寄存器机">寄存器机</a></h3>
+<p>我们可以声明任意多个局部变量，而这些局部变量，都可以用来存放--获取值。所以，一个局部变量实际上就是一个寄存器，而我们的WASM，实际上变成了一个拥有无数个寄存器的寄存器机！</p>
+<p>这该如何理解呢？我们知道，寄存器机就是可以把变量临时存放在寄存器中，在参与运算的时候，将寄存器的值给相应的指令即可。那么，例如对于<code>i32.add</code>指令，我们可以将其操作数利用<code>local.set</code>先存放在两个局部变量中。在执行指令之前，再使用<code>local.get</code>将两个局部变量的值读出放在栈上，就模拟出了寄存器机。</p>
+<p>寄存器机好不好呢？我只能说，SSA的寄存器机是好文明。所谓SSA，简单来说就是指任何一个寄存器的值都是不可变的。如果我们想改变一个寄存器的值，那最好的方法就是再用一个新的寄存器。SSA的寄存器机编写的代码，能够非常高效地进行各种程序自动分析算法，例如活性检测算法等，从而能得到更好的优化结果。LLVM IR就是一个著名的SSA的寄存器机。但很显然，WASM不是一个SSA的寄存器机。直观上来看，在对栈机编写的代码进行程序分析时，可以轻松地将其转变为SSA的寄存器机。</p>
+<h3 id="局部变量的必要性"><a class="header" href="#局部变量的必要性">局部变量的必要性</a></h3>
+<p>为什么WASM会引入局部变量，而让它不完全是一个栈机，甚至不是SSA的寄存器机呢？从历史上看，WASM设计之初的目标并不是成为一个底层指令集，而且也没有很好的编译器实现，所以就自然引入了局部变量机制（详情可看<a href="http://troubles.md/wasm-is-not-a-stack-machine/#why">这一节</a>）。</p>
+<p>但是对于这样的底层语言来说，历史原因往往并不重要，因为大部分情况下，WASM都是直接由编译器自高级语言生成。所以如果我们不想被局部变量破坏了我们的栈机，为什么不直接让编译器不生成局部变量呢？因此，这就涉及到了局部变量的必要性。也就是说，在WASM代码中，有一些事，不能通过栈机来实现，而只能通过局部变量来实现。</p>
+<p>这里需要指出，WASM层面的局部变量的必要性，并不与高级语言层面的局部变量的必要性挂钩。例如我们的C语言程序</p>
+<pre><code class="language-c">int a = 1 + 2;
+int b = 3 * 4;
+int c = a &amp; b;
+int d = 5 - 2;
+int e = c / d;
+</code></pre>
+<p>尽管这里C语言中用了好多局部变量，但是这些仍然可以只用栈机来描述，也就是通过压栈、弹栈，而不通过存放寄存器，仍然能够实现这样的操作。那究竟怎样的操作不能通过栈机来描述呢？</p>
+<p>第一个原因是语言设计上的限制。首先，在很早之前，WASM的局部作用域（比如说<code>block</code>）是不能读取这个作用域开始之前的栈上的内容的，因此只能通过局部变量来传递一些值。这个问题在「WASM is not a stack machine」这篇文章里被着重强调了。</p>
+<p>但到了2023年的今天，<a href="https://github.com/WebAssembly/spec/blob/master/proposals/multi-value/Overview.md">multi-value提案</a>已经成了标准化的WASM特性，被各大引擎都实现了，上述这个问题也不再是问题了。那我们还有用局部变量的必要性吗？</p>
+<p>针对这个问题，我特意请教了之前这篇文章的作者<a href="https://github.com/Vurich">JEF</a>。我节选一下他关于这的回信：</p>
+<blockquote>
+<p>I believe that locals are still necessary as (as far as I know) Wasm still doesn't have any stack manipulation instructions such as <a href="https://en.wikipedia.org/wiki/PEEK_and_POKE">peek and poke</a>. This means that if you want to store values for later you still need locals.</p>
+</blockquote>
+<p>简单来说，第二个问题是复用的问题。我们在编程的过程中，往往需要变量的复用，如在C语言中：</p>
+<pre><code class="language-c">int a = 1 + 2;
+int b = 3 * a;
+int c = a &amp; b;
+int d = 5 - a;
+int e = a + c / d;
+</code></pre>
+<p>可以看到，这里变量<code>a</code>在很多语句中都被使用。但是对于栈机来说，不能保证每次在构建这些值的时候，<code>a</code>的值都在栈顶。对于真正的栈机，往往会提供<code>peek</code>和<code>poke</code>指令。<code>peek</code>可以将此时栈上指定位置的值复制到栈顶，而<code>poke</code>则可将栈顶的值插入到栈的指定位置中。目前WASM并没有这样的指令，不过我们可以模拟出来，之后在控制语句与基本块一章中，我们会给出一个实际的例子。</p>
+<p>所以在WASM中，我们仍然需要局部变量机制来存储这些值，也就是说，在计算出<code>a</code>的值后，我们需要一个<code>local.set</code>将其临时存储。在之后计算别的值的时候如果需要用到<code>a</code>，再使用<code>local.get</code>。</p>
+<h2 id="常量"><a class="header" href="#常量">常量</a></h2>
+<p>我们之前的WASM代码中，指令的操作数最终都是通过<code>local.get</code>来获得的，但是往往我们还是会需要常量的，比如说<code>b = a + 1</code>，其一个操作数可以通过<code>local.get</code>来获取，但是另一个操作数就需要常量<code>1</code>。</p>
+<p>在WASM中，我们可以使用</p>
+<pre><code class="language-wasm">i32.const 1
+</code></pre>
+<p>这种语句来获得一个常量1。</p>
+<h2 id="全局变量"><a class="header" href="#全局变量">全局变量</a></h2>
+<p>WASM也支持全局变量。我们可以用<code>global</code>来声明，通过<code>global.get</code>来获取。例如：</p>
+<pre><code class="language-wasm">(module
+    (global $kitzuki i32 (i32.const 323))
+    (func $get_kitzuki (result i32)
+        global.get $kitzuki
+    )
+)
+</code></pre>
+<p>我们声明了一个叫<code>$kitzuki</code>的全局变量，其初始值为323（WASM的全局变量必须初始化）。随后，我们在函数<code>$get_kitzuiki</code>中，使用了<code>global.get</code>获取了这个全局变量的值。</p>
+<p>对于全局变量的设置，也就是<code>global.set</code>，则有一点点不太一样。正如Rust需要特别使用<code>static mut</code>来声明可变的静态变量，在WASM中，我们也需要<code>mut</code>来声明可变的全局变量：</p>
+<pre><code class="language-wasm">(module
+    (global $kitzuki (mut i32) (i32.const 323))
+    (func $set_kitzuki
+        (global.set $kitzuki (i32.const 1219))
+    )
+)
+</code></pre>
+<p>在这里，我们声明了一个可变的全局变量<code>$kitzuki</code>，初始值为323。随后，我们使用<code>global.set</code>给其赋值为1219。</p>
+<p>在WASM中，全局变量和局部变量类似，也会破坏栈机的性质。不过对于目前现代化的高级语言以及高级的编程模型，我们往往并不需要全局变量。全局变量在WASM中还有一个作用是通过导入与导出，与外界传递信息。不过这个留在之后的章节再说。</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="控制语句与基本块"><a class="header" href="#控制语句与基本块">控制语句与基本块</a></h1>
+<p>之前的几章中，我们反复提到WASM的局部变量机制与栈机、寄存器机的特性，其中我们指出，早期WASM的基本块语法设计导致局部变量的使用，但后来已经解决。在这一章里，我们将介绍在编程中不可或缺的元素——控制语句，并且用实际的例子，给大家分析基本块与寄存器机、栈机。</p>
+<h2 id="函数调用"><a class="header" href="#函数调用">函数调用</a></h2>
+<p>首先，我们来讲讲函数调用，从某种意义上，它也是一种控制语句。在WASM中，我们可以使用<code>call</code>语句进行函数调用。它与我们在高级语言中常见的函数调用几乎没有区别，唯一要注意的就是对于栈的控制。举一个实际的例子，我们会更好理解：</p>
+<pre><code class="language-wasm">(module
+    (func $foo (param i32 i32) (result i32 i32 i32)
+        ;; Do something...
+    )
+    (func $bar
+        i32.const 1
+        i32.const 1
+        call $foo
+        ;; Here we got three elements on the stack
+    )
+)
+</code></pre>
+<p>我们定义了一个接受两个参数，返回三个值的函数<code>$foo</code>（函数返回多个值的提案<a href="https://github.com/WebAssembly/spec/blob/master/proposals/multi-value/Overview.md">Multi-value proposal</a>已经成为标准化特性而被广泛实现了），当我们在函数<code>$bar</code>中调用<code>$foo</code>函数时，首先得确保栈上已经有两个元素了。在调用<code>$foo</code>之后，栈上的两个元素被这个函数消耗掉了（也就是弹栈走了），然后<code>$foo</code>返回了三个值，都存储在栈上，所以此时栈上有三个元素。</p>
+<p>此外，值得一提，函数调用指令也适用我们之前提到的语法糖，也就是：</p>
+<pre><code class="language-wasm">(func $bar
+    (call $foo (i32.const 1) (i32.const 1))
+    ;; Here we got three elements on the stack
+)
+</code></pre>
+<p>在了解了函数调用的栈性质之后，我们其实可以<strong>模拟</strong>出之前提到的peek和poke了：</p>
+<pre><code class="language-wasm">(module
+    (func $peek0 (param i32) (result i32 i32)
+        local.get 0
+        local.get 0
+    )
+
+    (func $peek1 (param i32 i32) (result i32 i32 i32)
+        local.get 0
+        local.get 1
+        local.get 0
+    )
+)
+</code></pre>
+<p><code>$peek0</code>函数做的事是将距离栈顶0个元素（也就是栈顶元素）复制并压栈，而<code>peek1</code>则是将距离栈顶为1的元素复制并压栈。</p>
+<h2 id="选择语句"><a class="header" href="#选择语句">选择语句</a></h2>
+<p>熟悉底层汇编的开发者一定了解，对于我们在高级语言中常见的选择语句<code>if</code>...<code>else</code>，在大部分的汇编架构中，其往往是实现成针对特定flag的标签跳转。但在WASM中，实际上提供了更高层面的抽象，也就是接近高级语言的<code>if</code>...<code>else</code>...<code>end</code>语句，即：</p>
+<pre><code class="language-wasm">if
+    ;; True branch
+else
+    ;; False branch
+end
+</code></pre>
+<p>在执行这个结构时，会从栈上将栈顶元素弹栈，若其为0，则执行False分支，否则执行True分支，非常符合直觉。</p>
+<p>我们在高级语言中使用选择语句的时候，往往是通过比大小来判断执行哪个分支，其本质上就是将大小转变为布尔值，然后根据布尔值来做判断。在WASM中，也提供了一系列将大小转变为布尔值的指令，例如</p>
+<pre><code class="language-wasm">i32.const 1219
+i32.const 323
+i32.ge_u
+</code></pre>
+<p>上述程序将得到1。其意思是，<code>i32.ge_u</code>的<code>ge</code>代表大于等于（greater than or equal to），而<code>u</code>代表将两个操作数看做无符号整数（之前我们提过，WASM的整数的有无符号是根据指令来决定的）。类似地，我们一共有<code>ge</code>、<code>gt</code>、<code>lt</code>、<code>le</code>、<code>eq</code>、<code>ne</code>等大小比较，与<code>s</code>、<code>u</code>的组合。</p>
+<p>在了解了函数调用与选择语句之后，我们就可以实现一个简单的递归形式的阶乘函数了：</p>
+<pre><code class="language-wasm">(func $factorial_recur (param $input i32) (result i32)
+    (i32.le_u (local.get $input) (i32.const 1))
+    if
+        i32.const 1
+        return
+    end
+    (i32.mul
+        (local.get $input)
+        (call $factorial_recur (i32.sub (local.get $input) (i32.const 1)))
+    )
+)
+</code></pre>
+<p>上述代码非常简洁清楚，如果不明白，我们可以用类似的C语言来帮助理解：</p>
+<pre><code class="language-c">unsigned int factorial_recur(unsigned int input) {
+    if (input &lt;= 1) {
+        return 1;
+    }
+    return input * factorial_recur(input - 1);
+}
+</code></pre>
+<h2 id="基本块与跳转"><a class="header" href="#基本块与跳转">基本块与跳转</a></h2>
+<p>除了选择语句以外，我们常见的循环语句，在底层往往需要通过跳转来实现。在WASN中，循环语句的跳转往往与基本块相绑定。</p>
+<p>具体而言，WASM中的跳转包括<code>br</code>和<code>br_if</code>，前者相当于底层汇编指令中的无条件跳转，例如AMD64中的<code>jmp</code>，而<code>br_if</code>则是有条件跳转，其工作方式与WASM中的<code>if</code>类似，消耗掉栈顶的一个值，判断其是否为true，如果为true则跳转。这两者使用起来很类似，所以接下来就以<code>br_if</code>为例。</p>
+<p>在WASM中，如果需要使用这类跳转，往往必须在一个基本块<code>block</code>或者<code>loop</code>中，具体而言，是这样的一个结构：</p>
+<pre><code class="language-wasm">(func
+    ;; Do something
+    block $my_block
+        ;; Do something inside this block
+        br_if $my_block
+        ;; Do something else
+    end
+    ;; ...
+    loop $my_loop
+        ;; Do something inside this loop
+        br_if $my_loop
+        ;; Do something else
+    end
+)
+</code></pre>
+<p>我们通过<code>block</code>和<code>loop</code>可以附带一个标识符，然后在<code>br</code>或者<code>br_if</code>的指令中，操作数就是相应的标识符，也就是<code>br_if $my_block</code>和<code>br_if $my_loop</code>。</p>
+<p>这两者有什么区别呢？很简单，<code>br</code>以及<code>br_if</code>，在<code>block</code>中将跳转到<code>block</code>之后的指令，而在<code>loop</code>中则会跳转到<code>loop</code>开头的第一条指令。我们可以近似地理解成，在<code>block</code>中充当了C语言中<code>break</code>的作用，而在<code>loop</code>中充当了C语言<code>continue</code>的作用。并且一点很重要的是，<code>block</code>和<code>loop</code>本身并不是循环，也就是说，<strong>如果内部没有<code>br</code>或者<code>br_if</code>，则执行完这个基本块就不会重复执行，而是接下来执行下一条指令</strong>。</p>
+<h3 id="基本块的参数和返回值"><a class="header" href="#基本块的参数和返回值">基本块的参数和返回值</a></h3>
+<p>WASM中的<code>block</code>和<code>loop</code>可以拥有返回值，而<a href="https://github.com/WebAssembly/spec/blob/master/proposals/multi-value/Overview.md">Multi-value proposal</a>这个提案则让基本块可以拥有参数。由于这个提案已经被广泛地实现，所以接下来，我们就介绍一下，<code>block</code>和<code>loop</code>的参数及返回值相关特性。</p>
+<p>简单来说，我们可以像定义函数一样，给基本块定义参数和返回值，如：</p>
+<pre><code class="language-wasm">(func $my_func
+    i32.const 1
+    i32.const 2
+    block $my_block (param i32 i32) (result i32)
+        ;; ...
+    end
+)
+</code></pre>
+<p>在这里，我们定义了一个接受两个<code>i32</code>参数，返回一个<code>i32</code>的基本块<code>$my_block</code>。但是，这里的语义实际上是与函数不太一样的，参数并不可以看做一个局部变量，而是需要用栈机的视角去看待。</p>
+<p>我们可以粗略地理解成，<code>$my_block</code>这个基本块也有一个栈，这个栈位于<code>$my_func</code>的栈内。当我们进入这个基本块之前，函数栈上已经有了1和2这两个元素。当我们进入这个基本块时，1和2这两个元素就<strong>归属</strong>于基本块的栈了，也就是说，在基本块的开头，栈上就有了两个元素1和2。</p>
+<p>由于我们声明这个基本块需要返回1个元素，因此当这个基本块结束时，这个基本块的栈上应该只剩1个元素，并且返回后，这1个元素就<strong>归属</strong>回函数栈，并且之前的元素1和2，由于归属在基本块，所以可以供其操作，把栈上的元素从开头的两个，变成最终只剩一个。</p>
+<p>换句话说，如果这个函数在进入基本块前，栈上已经有了3个元素，而我们的基本块接受2个参数，那么基本块是没有办法访问函数栈的第一个元素，只能访问后两个元素；类似地，基本块结束时，也必须保证栈上元素的数量等于其返回的值的数量。</p>
+<p>这看上去似乎很复杂，那我们就通过两个例子来学习一下。</p>
+<h4 id="寄存器机形式的阶乘函数"><a class="header" href="#寄存器机形式的阶乘函数">寄存器机形式的阶乘函数</a></h4>
+<p>首先，我们来看一下在WASM中，以迭代方式实现的阶乘函数。</p>
+<pre><code class="language-wasm">(func $factorial_iter_register (param $input i32) (result i32)
+    (local $prod i32)
+    (local.set $prod (i32.const 1))
+    loop $main_loop (result i32)
+        (i32.le_u (local.get $input) (i32.const 1))
+        if
+            local.get $prod
+            return
+        end
+        (local.set $prod
+            (i32.mul (local.get $input) (local.get $prod))
+        )
+        (local.set $input (i32.sub (local.get $input) (i32.const 1)))
+        br $main_loop
+    end
+)
+</code></pre>
+<p>这个例子看上去不算难以理解，其可粗略地看做下面的C程序：</p>
+<pre><code class="language-c">unsigned int factorial_iter_register(unsigned int input) {
+    unsigned int prod = 1;
+    while (1) {
+        if (input &lt;= 1) {
+            return prod;
+        }
+        prod = input * prod;
+        input = input - 1;
+    }
+}
+</code></pre>
+<p>在这个例子中，有两点值得注意。</p>
+<p>首先，这个例子中的基本块<code>$main_loop</code>较为简单，没有参数，所以容易理解一些。由于其返回一个<code>i32</code>类型的值，因此在这个基本块结束的时候，必须要求其栈上只剩1个值。在这里，我们通过<code>return</code>指令巧妙地保证了这一点。</p>
+<p>其次，这个例子大量使用了局部变量用于存储临时值，因此是以寄存器机的形式来实现的这一功能。</p>
+<h4 id="栈机形式的阶乘函数"><a class="header" href="#栈机形式的阶乘函数">栈机形式的阶乘函数</a></h4>
+<p>事实上，在基本块可以接受参数之后，我们就可以用纯栈机的形式实现阶乘函数了，不过需要借助我们之前模拟实现的<code>$peek0</code>和<code>$peek1</code>（这段代码改编自<a href="https://github.com/WebAssembly/spec/blob/master/proposals/multi-value/Overview.md">Multi-value proposal</a>中的官方示例）：</p>
+<pre><code class="language-wasm">(func $factorial_iter_stack (param $input i32) (result i32)
+    i32.const 1
+    local.get $input
+    loop $main_loop (param i32 i32) (result i32)
+        call $peek1
+        call $peek1
+        i32.mul
+        call $peek1
+        i32.const 1
+        i32.sub
+        call $peek0
+        i32.const 1
+        i32.gt_u
+        br_if $main_loop
+        call $peek1
+        return
+    end
+)
+</code></pre>
+<p>这一段代码乍看很难理解，那么，为了方便理解，我们不妨举一个例子。当<code>$input</code>为3时，我们来看看，这个函数的栈究竟是如何变化的：</p>
+<pre><code class="language-plaintext">[i32.const 1]          1
+[local.get $input]     1  3
+[INSIDE $main_loop]    1  3
+[call $peek1]          1  3  1
+[call $peek1]          1  3  1  3
+[i32.mul]              1  3  3
+[call $peek1]          1  3  3  3
+[i32.const 1]          1  3  3  3  1
+[i32.sub]              1  3  3  2
+[call $peek0]          1  3  3  2  2
+[i32.const 1]          1  3  3  2  2  1
+[i32.gt_u]             1  3  3  2  1
+[br_if $main_loop YES] 3  2
+[INSIDE $main_loop]    3  2
+[call $peek1]          3  2  3
+[call $peek1]          3  2  3  2
+[i32.mul]              3  2  6
+[call $peek1]          3  2  6  2
+[i32.const 1]          3  2  6  2  1
+[i32.sub]              3  2  6  1
+[call $peek0]          3  2  6  1  1
+[i32.const 1]          3  2  6  1  1  1
+[i32.gt_u]             3  2  6  1  0
+[br_if $main_loop NO]  3  2  6  1
+[call $peek1]          3  2  6  1  6
+[return]               6
+</code></pre>
+<p>可以看到，在最终<code>return</code>的时候，返回的值是6，确实计算成功了3的阶乘。</p>
+<p>这里有几点需要注意的。在第一次进入<code>$main_loop</code>的时候（第三行），由于这个基本块接受两个参数，因此此时栈上的1和3就归属于了<code>$main_loop</code>这个基本块，从而之后的<code>$peek1</code>操作，才能访问这两个元素。</p>
+<p>在第一次条件跳转<code>br_if $main_loop</code>时，首先消耗掉栈顶的值，也就是1，这个值是刚刚<code>i32.gt_u</code>得到的比较结果。由于其为1，所以需要跳转到这个loop的开头。同时，<code>br</code>和<code>br_if</code>的语义要求，将此时基本块栈上的值只保留基本块参数个数。简单来说，由于<code>$main_loop</code>接受两个参数，而在消耗掉栈顶的1后，栈上还有四个值（1, 3, 3, 2），因此3和2会被作为下一次循环时，这个基本块的参数，而剩下的1和3就被抛弃了，所以此时栈上就只剩下3和2了。</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="导入与导出"><a class="header" href="#导入与导出">导入与导出</a></h1>
+<p>在熟悉了WASM的基本语法之后，我们会发现，正如最开始所说，WASM的核心还是对各种数的计算，而缺少与系统的交互，主要功能是做一些计算密集型的操作，也就是提供一些例如加密、哈希等操作。那么，WASM究竟怎样才能与外界系统交互呢？从这一章开始，我们就要讨论这个问题。在这一章中，我们讨论的第一个方法是导入（Import）与导出（Export）。</p>
+<p>在WASM中，导入与导出非常的简单，我们直接以一个例子来说明。我们创建<code>common.wat</code>并写入以下代码：</p>
+<pre><code class="language-wasm">(module
+    (import &quot;outer&quot; &quot;log_number&quot; (func $log_number (param i32)))
+    (import &quot;outer&quot; &quot;instability&quot; (global $instability i32))
+
+    (func $peek0 (param i32) (result i32 i32)
+        local.get 0
+        local.get 0
+    )
+
+    (func (export &quot;wasm_mul&quot;) (param $left i32) (param $right i32) (result i32)
+        (i32.add
+            (i32.mul (local.get $left) (local.get $right))
+            (global.get $instability)
+        )
+        call $peek0
+        call $log_number
+    )
+)
+</code></pre>
+<p>这段程序想要实现的是一个脑子多少有点问题的计算器，它可以用来计算乘法，但算出来的结果总会有些偏移。</p>
+<p>我们首先看到的是两个<code>import</code>语句，这个语句就是WASM中的「导入」。<code>import</code>后跟着两个字符串，例如&quot;outer&quot;和&quot;log_number&quot;，这个的意思是导入outer模块的<code>log_number</code>函数。关于这里的模块怎么用，我们后面会提到。紧接着这两个字符串，就声明了这个导入的类型，这里是一个接受一个<code>i32</code>类型参数的函数<code>$log_number</code>，而下一个<code>import</code>则导入的是一个<code>i32</code>类型的全局变量<code>$instability</code>。</p>
+<p>而导出，则是我们之前已经用了很多次的<code>export</code>语句。在这段程序里，我们导出了一个名叫<code>wasm_mul</code>的函数。其实现为，将输入的两个数相乘，然后加上之前导入的偏移值全局变量<code>$instability</code>，调用导入的函数<code>$log_number</code>作个日志输出，然后返回。</p>
+<p>从上面的描述可以知道，我们的WASM程序终于有了主动输出的能力了，虽然这个能力是导入的，但终究还是能自己控制的。</p>
+<h2 id="导入与导出的使用"><a class="header" href="#导入与导出的使用">导入与导出的使用</a></h2>
+<p>说了这么多，我们来看看使用效果。</p>
+<h3 id="在rust中使用wasmer库"><a class="header" href="#在rust中使用wasmer库">在Rust中使用wasmer库</a></h3>
+<p>与之前使用wasmer来调用<code>adder.wasm</code>十分类似，我们来看看这次的代码是怎么写的：</p>
+<pre><code class="language-rust  ignore">let wasm_bytes = fs::read(&quot;./common.wasm&quot;)?;
+let mut store = Store::default();
+let module = Module::new(&amp;store, wasm_bytes)?;
+let imports = imports! {
+    &quot;outer&quot; =&gt; {
+        &quot;log_number&quot; =&gt;
+            Function::new_typed(
+                &amp;mut store,
+                |number: i32| println!(&quot;In WASM, we got {number}&quot;)
+            ),
+        &quot;instability&quot; =&gt; Global::new(&amp;mut store, Value::I32(-5)),
+    }
+};
+let instance = Instance::new(&amp;mut store, &amp;module, &amp;imports)?;
+let wasm_mul: TypedFunction&lt;(u32, u32), u32&gt; = instance
+    .exports
+    .get_typed_function(&amp;mut store, &quot;wasm_mul&quot;)?;
+println!(&quot;Calculating 5 x 8 with instability -5 ...&quot;);
+let prod = wasm_mul.call(&amp;mut store, 5, 8)?;
+println!(&quot;From outside, we got {prod}&quot;);</code></pre>
+<p>运行这段程序，我们可以看到输出：</p>
+<pre><code class="language-plaintext">Calculating 5 x 8 with instability -5 ...
+In WASM, we got 35
+From outside, we got 35
+</code></pre>
+<p>可以看到，我们之前写的WASM程序确实像我们说的一样，想计算5乘8的结果，但是脑子出了点问题，算出来的结果是五八三十五。特别值得注意的是&quot;In WASM, we got 35&quot;，这段话是在WASM执行的过程中输出的！说明我们的WASM程序，确实通过导入函数的方法，实现了与系统的交互。</p>
+<p>具体到wasmer的API中来看，我们与之前和调用<code>adder.wasm</code>的程序作对比，会发现，这里主要是新增了<code>imports</code>的相关语句。wasmer提供了<code>imports!</code>宏，我们在这个宏中，首先声明了第一层的&quot;outer&quot;，这对应了我们在WASM的导入中第一个字符串，然后分别定义了<code>log_number</code>函数和<code>instability</code>全局变量，其定义方法非常直观。随后，在<code>Instance</code>实例创建的过程中传入这个对象，就可以将Rust中的函数、数据传入WASM中。</p>
+<h3 id="在rust中使用wasmtime库"><a class="header" href="#在rust中使用wasmtime库">在Rust中使用wasmtime库</a></h3>
+<p>与之前类似，我们来看看如何使用wasmtime库来建立导入导出：</p>
+<pre><code class="language-rust  ignore">let wasm_bytes = fs::read(&quot;./common.wasm&quot;)?;
+let engine = Engine::default();
+let mut store = Store::new(&amp;engine, ());
+let module = Module::new(&amp;engine, wasm_bytes)?;
+let log_number = Func::wrap(&amp;mut store, |number: i32| {
+    println!(&quot;In WASM, we got {number}&quot;);
+});
+let instability = Global::new(
+    &amp;mut store,
+    GlobalType::new(ValType::I32, Mutability::Const),
+    (-5i32).into(),
+)?;
+let instance = Instance::new(
+    &amp;mut store,
+    &amp;module,
+    &amp;[log_number.into(), instability.into()],
+)?;
+let wasm_mul = instance.get_typed_func::&lt;(u32, u32), u32&gt;(&amp;mut store, &quot;wasm_mul&quot;)?;
+println!(&quot;Calculating 5 x 8 with instability -5 ...&quot;);
+let prod = wasm_mul.call(&amp;mut store, (5, 8))?;
+println!(&quot;From outside, we got {prod}&quot;);</code></pre>
+<p>可以看到，我们也是创建了<code>log_number</code>和<code>instability</code>这两个用于传递的对象，随后在创建<code>Instance</code>实例的过程中传入，即可将Rust中的函数与数据传入WASM。</p>
+<h3 id="在web中"><a class="header" href="#在web中">在Web中</a></h3>
+<pre><code class="language-html">&lt;!doctype html&gt;
+&lt;html&gt;
+  &lt;head&gt;
+    &lt;meta charset=&quot;utf-8&quot;&gt;
+    &lt;title&gt;WASM Test&lt;/title&gt;
+  &lt;/head&gt;
+
+  &lt;body&gt;
+    &lt;script&gt;
+      const importObject = {
+        outer: {
+            log_number: (number) =&gt; console.log(`In WASM, we got ${number}`),
+            instability: new WebAssembly.Global({ value: &quot;i32&quot;, mutable: false }, -5)
+        }
+      };
+      WebAssembly.instantiateStreaming(fetch(&quot;./common.wasm&quot;), importObject)
+        .then(obj =&gt; {
+            console.log('Calculating 5 x 8 with instability -5 ...');
+            const prod = obj.instance.exports.wasm_mul(5, 8);
+            console.log(`From outside, we got ${prod}`);
+        });
+    &lt;/script&gt;
+  &lt;/body&gt;
+&lt;/html&gt;
+</code></pre>
+<p>在Web中使用WASM的导入和导出，只需要在<code>instantiateSteaming</code>函数中提供第二个参数<code>importObject</code>即可。这个参数的创建也很清楚，这里不再赘述。</p>
+<p>值得一提的是，如果我们想使用ES Module的方案，也就是目前利用webpack来做<code>import { wasm_mul } from './common.wasm'</code>，则并不是那么容易，需要修改WASM中的代码，具体可以看<a href="https://github.com/WebAssembly/esm-integration/blob/main/proposals/esm-integration/EXAMPLES.md">ES Module Integration Proposal的示例</a>。</p>
+<h2 id="类型转换"><a class="header" href="#类型转换">类型转换</a></h2>
+<p>上述讲了若干种高级编程语言与WASM程序通过导入与导出来交互的例子，有一个问题我们需要注意：类型转换。无论在Rust还是JavaScript中，我们都有若干种类型，例如Rust的<code>bool</code>、<code>usize</code>，抑或是JavaScript的<code>number</code>等等，以及各种用户自定义类型。而WASM中，我们只有<code>i32</code>、<code>i64</code>、<code>f32</code>、<code>f64</code>这几个基本的数字类型，那我们在调用接口的过程中，究竟是怎样做类型转换的呢？</p>
+<p>在本章中，我们将集中关注高级编程语言的基本数字类型与WASM的数字类型的转换，而对于自定义类型、结构体、数组等，我们将在之后关注。</p>
+<p>对于C/C++和Rust而言，目前遵循的是<a href="https://github.com/WebAssembly/tool-conventions/blob/main/BasicCABI.md">BasicCABI</a>，其中值得注意的是，将所有小于8字节的整型（例如<code>bool</code>、<code>u8</code>、<code>u16</code>、<code>u32</code>）均转化为WASM中的<code>i32</code>，而8字节整型（Rust中的<code>u64</code>，C中的<code>unsigned long long</code>）转化为WASM中的<code>i64</code>。</p>
+<p>而WASM类型与JavaScript中类型的互相转化则遵循<a href="https://webassembly.github.io/spec/js-api/index.html#tojsvalue">ToJSValue</a>和<a href="https://webassembly.github.io/spec/js-api/index.html#towebassemblyvalue">ToWebAssemblyValue</a>。</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="内存与引用"><a class="header" href="#内存与引用">内存与引用</a></h1>
+<p>在上一章的最后，我们提到，我们暂时将注意力集中在高级语言的基本数字类型与WASM的数字类型之间的转化，而在本章中，我们就来谈谈对于高级的复杂聚合类型，WASM的处理方法是什么。不仅如此，我们还要谈一谈，无论在高级语言还是汇编语言中，都非常常见的概念——「内存」与「引用」。</p>
+<h2 id="为什么要引入内存"><a class="header" href="#为什么要引入内存">为什么要引入内存</a></h2>
+<p>首先我们需要解决的问题是，为什么WASM中需要内存这个概念？在高级语言或者汇编语言中的内存提供的功能中，有哪些是WASM目前没有内存这一概念就做不了的事。</p>
+<p>第一，在高级语言中，当我们需要临时存储一个值的时候，往往会使用局部变量，而局部变量往往会以内存的形式存在，更具体地说，是使用内存的「栈区」这一概念。但是在WASM中，我们不仅有局部变量、全局变量这种机制，而且通过模拟栈机的peek和poke，也可以实现临时存储值这一功能。因此这一功能并不需要内存就可以实现。</p>
+<p>内存除了栈区，还有堆区。在C语言中，我们往往使用<code>malloc</code>、<code>free</code>等来操作堆区的内存，而在Rust中，<code>Box</code>等指针往往也会使用堆区的内存。在高级语言中，堆区往往有两个作用：</p>
+<ul>
+<li>
+<p>用来分配动态大小的内存</p>
+<p>对于在运行时才能知道大小的数组等大小是动态的对象，我们往往将其分配在堆区，以提高程序的优化程度。在这种情况下，WASM不用内存确实很难做到。</p>
+</li>
+<li>
+<p>用来分配所有权不定的对象</p>
+<p>对于所有权难以确定的对象，高级语言往往有很多种处理方法。而将其放在堆区，也是一个很常用的手段。尽管有不放在堆区的方法，但是WASM大部分情况下还是由高级语言编译而来，所以难以避免这种情形。</p>
+</li>
+</ul>
+<p>内存除了这些用途之外，还有一个特性离不开内存，那就是「引用」。高级语言中的引用，在汇编层面，往往会编译为一个存有内存地址的指针。在常见的C ABI中，如果函数的返回值类型是结构体，往往也会要求底层实现是以指针的形式实现。而在WASM中，尽管有局部变量、栈机机制，但是如果没有内存，就没有办法实现指针、引用这一机制。</p>
+<h2 id="wasm内存的定义与使用"><a class="header" href="#wasm内存的定义与使用">WASM内存的定义与使用</a></h2>
+<p>在WASM中，定义一个内存十分简单：</p>
+<pre><code class="language-wasm">(module
+    (memory 1)
+)
+</code></pre>
+<p>这里的<code>1</code>表示WASM的内存至少有1页大小（WASM中定义一页为64KB）。</p>
+<p>那我们该如何使用WASM的内存呢？我们可以用一句话粗略地理解：WASM中的内存是用数组模拟的内存。我们通过<code>(memory 1)</code>申请的，至少有64KB大小的内存，实际上可以看做一个数组<code>[u8; 1 &lt;&lt; 16]</code>，也就是一个长度为64KB的字节数组。</p>
+<p>这意味着什么事呢？我们一般意义上的「内存地址」，实际上变成了这个数组的索引值。因此，也就是取值范围为0到64K的<strong>i32类型的数</strong>（目前是<code>i32</code>类型，<a href="https://github.com/WebAssembly/memory64/blob/main/proposals/memory64/Overview.md">Memory64提案</a>将引入<code>i64</code>类型的数也作为索引类型）。</p>
+<p>理解了这一点，我们就可以轻松理解WASM中的内存使用方法了：</p>
+<pre><code class="language-wasm">i32.const 0
+i32.load
+</code></pre>
+<p><code>i32.load</code>指令接收一个操作数，也就是第一句<code>i32.const 0</code>。这条指令执行的结果，就是在当前模块的内存中，取地址为0的<code>i32</code>类型的数。</p>
+<p>类似地：</p>
+<pre><code class="language-wasm">i32.const 0
+i32.const 323
+i32.store
+</code></pre>
+<p>这些指令的结果是，将<code>i32</code>类型的数323存储到当前模块内存中地址为0的位置。</p>
+<p>关于内存读写指令，还有两点需要注意的：</p>
+<p>第一，WASM提供了<code>offset</code>机制，能够更方便地做内存读写：</p>
+<pre><code class="language-wasm">i32.const 0
+i32.load offset=4
+</code></pre>
+<p>这些指令的结果是，从内存地址0开始，偏移值为4（也就是内存地址为4）处读取<code>i32</code>类型的值。</p>
+<p>WASM提供这种机制的原因是，在很多情况下，内存值是动态确定的（例如某个结构体的地址），但是偏移值是确定的（例如读取这个结构体的某个字段）。这样可以减少内存地址的计算。</p>
+<p>第二，内存中的值，最小的单位是1字节，而WASM中指令操作的单位是<code>i32</code>或者<code>i64</code>。因此，WASM在读取内存时，提供了诸如<code>i32.load8_s</code>、<code>i32.load16_u</code>、<code>i32.store8</code>等操作，分别对应读取、写入的比特数（读取时还应考虑有无符号扩展）。熟悉汇编指令的开发者对这个一定了如指掌，这里不再赘述。</p>
+<p>在有了这些概念以及指令之后，我们之前提到的，在WASM中使用内存的必要性的两个问题就得到了解决。</p>
+<h2 id="通过内存与外界交互"><a class="header" href="#通过内存与外界交互">通过内存与外界交互</a></h2>
+<p>在拥有了内存之后，我们终于能够解决之前提出的，怎样在高级语言与WASM之间，传递复杂聚合对象的问题了。而解决这个问题的方法，就是通过内存的导入与导出。</p>
+<p>与函数、全局变量类似，内存也可以导入与导出。我们可以写</p>
+<pre><code class="language-wasm">(module
+    (memory (export &quot;memory&quot;) 1)
+)
+</code></pre>
+<p>来声明我们当前模块导出至外界一个大小至少为64KB的内存。而外界也可以通过与上一章中类似的方法，获取内存。以wasmer为例，我们可以通过</p>
+<pre><code class="language-rust  ignore">let memory = instance.exports.get_memory(&quot;memory&quot;)?;
+let memory_view = memory.view(&amp;store);</code></pre>
+<p>来获取导出的内存，然后对<code>memory_view</code>进行读写。这里需要注意的一点是，<code>memory_view</code>需要获取对<code>store</code>的共享引用，因此在每一次我们调用WASM导出的函数时，会对<code>store</code>进行独占引用，因此在调用后，我们需要重新使用<code>.view</code>函数来获取<code>memory_view</code>。这么做的原因是，在WASM执行的过程中，可能会对内存进行扩容等操作，而这些操作可能会让内存地址产生改变，从而需要重新获取内存。</p>
+<p>我们在高级语言中可以对WASM的内存进行读写，这有什么好处呢？我们知道，之前之所以我们没有办法将高级语言中的复杂聚合类型传入WASM的函数，是因为我们缺少相对的表达能力。WASM的函数大部分只接受基本数字类型，我们没法传结构体进去；WASM也不能读写外界的内存，所以我们传数组的首地址进去更是无可奈何。</p>
+<p>而通过读写WASM内存，我们就有了一种传递复杂聚合类型的能力。以下面这个例子为例：</p>
+<p>我们创建<code>transformer.wat</code>：</p>
+<pre><code class="language-wasm">(module
+    (memory (export &quot;memory&quot;) 1)
+    (func (export &quot;transform&quot;) (param $index i32) (param $length i32)
+        (local $ch i32)
+        loop $main_loop
+            (i32.le_u (local.get $length) (i32.const 0))
+            if
+                return
+            end
+            (i32.store8
+                (local.get $index)
+                (i32.add
+                    (i32.load8_u (local.get $index))
+                    (i32.const 1)
+                )
+            )
+            (local.set $index (i32.add (local.get $index) (i32.const 1)))
+            (local.set $length (i32.sub (local.get $length) (i32.const 1)))
+            br $main_loop
+        end
+    )
+)
+</code></pre>
+<p>然后我们在Rust中，仍然使用wasmer，在实例化WASM之后，使用</p>
+<pre><code class="language-rust  ignore">let transform: TypedFunction&lt;(u32, u32), ()&gt; = instance
+    .exports
+    .get_typed_function(&amp;mut store, &quot;transform&quot;)?;
+let memory = instance.exports.get_memory(&quot;memory&quot;)?;
+
+// Prepare source
+let source: [u8; 6] = [1, 1, 4, 5, 1, 4];
+let memory_view = memory.view(&amp;store);
+memory_view.write(0, &amp;source)?;
+
+transform.call(&amp;mut store, 0, 6)?;
+
+// Retrieve transformed source
+let memory_view = memory.view(&amp;store);
+let mut transformed_source = [0; 6];
+memory_view.read(0, &amp;mut transformed_source)?;
+
+println!(&quot;Transformed source is {transformed_source:?}&quot;);</code></pre>
+<p>下面我们来解释这个例子的功能。</p>
+<ol>
+<li>我们在WASM中，导出了WASM的内存，同时提供了一个函数<code>transform</code>。这个函数接受两个参数：WASM内存中的地址，以及相应对象的长度。</li>
+<li>我们在Rust中，创建了一个长度为6字节数组，其内容为1, 1, 4, 5, 1, 4。将其写入内存地址0后，调用<code>transform</code>函数时，第一个参数就传入的是0，也就是这个数组在WASM内存中的首地址，而第二个参数传入的是6，也就是这个数组的长度。</li>
+<li>在<code>transform</code>函数中，我们遍历WASM中，从首地址0开始，长度为6的每个字节，将其加1后写回</li>
+<li>在Rust中，调用WASM导出的<code>transform</code>之后，我们再次读取内存中相应的片段，并输出，可以发现值变成了2, 2, 5, 6, 2, 5。</li>
+</ol>
+<p>这就是利用读写WASM内存，在高级语言与WASM之间传递复杂聚合类型的一种途径。</p>
+<h2 id="沙盒"><a class="header" href="#沙盒">沙盒</a></h2>
+<p>为什么传递复杂聚合类型要这么麻烦？我们可以注意到，如果需要传递复杂聚合类型，<strong>我们需要两次整段内存的复制</strong>！一次从嵌入环境复制到WASM中，一次是从WASM中复制回嵌入环境中。</p>
+<p>如果经常在各种讨论版中关注WASM的开发者一定会注意到，往往会有一些WASM与原生JavaScript性能的比较，有些情况WASM会偏慢，然后就会有人评论说，你这测试方法不标准，偏慢的时间应该是在传递数据，而不是在计算。并且也会有很多专业的架构师，正是考虑到传递数据时偏慢，才会三思要不要使用WASM。</p>
+<p>事实上，这么做的原因，是WASM的一个招牌特性——沙盒（Sandbox）。我们其实可以注意到，如果外界不向WASM导入内存读写函数，那么，<strong>WASM永远无法读写除了自身那一段内存以外的内存</strong>。也就是说，WASM的程序是跑在一个沙盒内的，绝对不会影响宿主环境的内存。</p>
+<h2 id="字符串"><a class="header" href="#字符串">字符串</a></h2>
+<p>我们之前一直没有在WASM中真正处理过字符串，但是字符串确实是一个非常常见的编程元素。在大部分高级编程语言中，字符串在底层的实现都是数组。而我们了解了WASM的内存概念，是不是终于可以处理字符串了呢！</p>
+<p>事实上，WASM特地为字符串常量设计了一个非常方便的语法：数据段（Data segment）。</p>
+<p>(module
+(memory 1)
+(data (i32.const 0) &quot;Hello&quot;)
+)</p>
+<p>这一段代码的意思是，在WASM的内存中，地址为0开始，定义一串字符串&quot;Hello&quot;。当我们实例化这个WASM模块时，它的内存从0开始就会有这一串字符串。</p>
+<p>有了这个工具，我们终于可以随心所欲在WASM中输出文本了。</p>
+<p>我们编写<code>string_in_wasm.wat</code>：</p>
+<pre><code class="language-wasm">(module
+    (import &quot;outer&quot; &quot;memory&quot; (memory 1))
+    (import &quot;outer&quot; &quot;log&quot; (func $log (param i32 i32)))
+
+    (data (i32.const 0) &quot;关注希月萌奈喵&quot;)
+
+    (func (export &quot;output_inside_string&quot;)
+        (call $log (i32.const 0) (i32.const 21))
+    )
+)
+</code></pre>
+<p>以及<code>index.html</code>（代码改编自<a href="https://developer.mozilla.org/en-US/docs/WebAssembly/Understanding_the_text_format#webassembly_memory">WebAssembly Memory</a>）：</p>
+<pre><code class="language-html">&lt;!doctype html&gt;
+&lt;html&gt;
+  &lt;head&gt;
+    &lt;meta charset=&quot;utf-8&quot;&gt;
+    &lt;title&gt;WASM Test&lt;/title&gt;
+  &lt;/head&gt;
+
+  &lt;body&gt;
+    &lt;script&gt;
+      const memory = new WebAssembly.Memory({ initial: 1 });
+      const importObject = {
+        outer: {
+            log: (index, length) =&gt; {
+                const bytes = new Uint8Array(memory.buffer, index, length);
+                const string = new TextDecoder(&quot;utf8&quot;).decode(bytes);
+                console.log(string);
+            },
+            memory: memory
+        }
+      };
+      WebAssembly.instantiateStreaming(fetch(&quot;./string_in_wasm.wasm&quot;), importObject)
+        .then(obj =&gt; {
+            obj.instance.exports.output_inside_string();
+        });
+    &lt;/script&gt;
+  &lt;/body&gt;
+&lt;/html&gt;
+</code></pre>
+<p>这段代码是什么意思呢？</p>
+<p>在WASM中，我们定义了内存中的一个字符串“关注希月萌奈喵”（这串中文字符串的长度为21字节）。随后，我们需要导入一个<code>log</code>函数。这个函数接受两个<code>i32</code>类型的参数，其实现位于我们的JavaScript代码中。从代码中我们可以了解到，这段代码可以从WASM的内存中，<code>index</code>开始，读取<code>length</code>长度个字节，然后将其解码为UTF8字符串，然后输出。因此，我们在WASM中调用这段代码，并传入参数0和21。当我们测试这段程序时，我们可以发现，在控制台上，真的输出了：</p>
+<p>「关注希月萌奈喵」</p>
+<p>这串字符串。</p>
+<p>值得注意的是，这里我们采用JavaScript作为示例代码，是因为Rust中会有一些麻烦。敏感的开发者一定已经注意到了，在JavaScript代码中，<code>memory</code>这个变量，如果转成Rust会有些麻烦。因为这个变量在作为导入函数传给store时，所有权已经给store了，但是<code>log</code>还引用了这个变量，十分难搞。在wasmer中，我们需要使用<code>FunctionEnv</code>等方法来处理这件事，具体可以看官方文档<a href="https://github.com/wasmerio/wasmer/blob/master/docs/migration_to_3.0.0.md#after"><code>WasmerEnv</code> is removed in favor of <code>FunctionEnv</code></a>。</p>
+<h2 id="函数指针"><a class="header" href="#函数指针">函数指针</a></h2>
+<p>几乎所有的和内存相关的问题都解决了，但是，「函数指针」怎么解决？？？</p>
+<p>我们知道，在C、Rust等高级语言中，一定会存在「函数指针」。也就是说，我们要调用的函数具体是哪个，需要在运行时决定。在底层实现中，往往是由「间接调用」来解决，也就是将目标函数的地址存储在寄存器中，跳转时读取寄存器的值作为调用目标。</p>
+<p>但是在WASM中，对函数的调用指令<code>call</code>的操作数不是地址，而是一个编号，也就是例如我们之前的<code>call $log</code>，这里<code>$log</code>并不是一个真正的数字类型，它只是一个函数编号而已。第二个问题，我们存储在WASM内存中的值，只能是数字类型，因此内存中也没法存储函数的地址。这咋办捏？</p>
+<p>WASM引入了table机制（代码改编自<a href="https://developer.mozilla.org/en-US/docs/WebAssembly/Understanding_the_text_format#webassembly_tables">WebAssembly Tables</a>）：</p>
+<pre><code class="language-wasm">(module
+    (table 2 funcref)
+    (elem (i32.const 0) $home $birth)
+    (func $home (result i32)
+        i32.const 323
+    )
+    (func $birth (result i32)
+        i32.const 1219
+    )
+    (type $func_t (func (result i32))
+    (func $call_by_index (param $func_index $i32) (result i32)
+        (call_indirect (local.get $func_index) (type $func_t))
+    )
+)
+</code></pre>
+<p>这段代码实现了啥功能呢？用C语言来看，可以粗略看成：</p>
+<pre><code class="language-c">int home(void) { return 323; }
+int birth(void) { return 1219; }
+
+typedef int(*func_t)(void);
+func_t my_func_table[2] = { home, birth };
+
+int call_by_index(int func_index) {
+    return (my_func_table[func_index])();
+}
+</code></pre>
+<p>WASM的<code>table</code>语句，类似之前的<code>memory</code>，定义了一个元素个数为2的表。随后，我们通过<code>elem</code>语句，类似之前的<code>data</code>语句，声明了这个表的内容，其两个元素分别是我们定义的<code>$home</code>和<code>$birth</code>。</p>
+<p>在调用时，我们需要专门使用<code>call_indirect</code>指令。这个指令的第一个参数就是目标函数在这个表中的位置，第二个参数，则是目标函数的类型。</p>
+<p>通过这种方式，WASM可以有效避免一般的控制流劫持技术，也就是攻击者想将函数跳转的地址指向攻击者自己编写的函数。而这里，<code>call_indirect</code>指令，必须跳转到事先已经写在<code>table</code>中的函数，并且类型还必须一致。</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="wasi-1"><a class="header" href="#wasi-1">WASI</a></h1>
+<p>之前我们提到，要想解决WASM程序与外界交互的问题，方法之一就是使用导入与导出。有没有方法之二呢？答案是「YES AND NO」。在这章中我们要讨论的<a href="https://wasi.dev">WASI</a>（The WebAssembly System Interface），可以看做方法之二，而它实际上也是在导入与导出基础之上的。</p>
+<p>WASI的想法非常简单，我们在WASM中使用<code>import</code>对外界请求导入函数时，有些功能往往被非常多WASM程序请求，例如读文件、写文件等等。那WASI就是把这些功能抽象出来，既可以理解成操作系统提供的系统调用接口，也可以理解成libc的统一接口，总之是一个抽象的接口。</p>
+<p>WASI定义的是一个接口标准，而各个嵌入环境的实现可以选择性地实现接口。例如，Web环境肯定是不允许直接读写文件的，因此Web环境可以选择不实现对文件读写的接口。但总之，通过WASI接口，我们的WASM程序就可以实现更多的可移植性了。</p>
+<p>值得一提的是，WASI目前还是一个很新的技术，因此目前的标准、规定也不是稳定的。所以在这一章中，我们主要讨论的是WASI的基本原理，而不会详细阐述WASI的API。</p>
+<h2 id="使用wasi的wasm程序"><a class="header" href="#使用wasi的wasm程序">使用WASI的WASM程序</a></h2>
+<p>首先我们看看使用WASI的WASM程序长什么样：</p>
+<pre><code class="language-wasm">(module
+    ;; Import the required fd_write WASI function which will write the given io vectors to stdout
+    ;; The function signature for fd_write is:
+    ;; (File Descriptor, *iovs, iovs_len, nwritten) -&gt; Returns number of bytes written
+    (import &quot;wasi_unstable&quot; &quot;fd_write&quot; (func $fd_write (param i32 i32 i32 i32) (result i32)))
+
+    (memory 1)
+    (export &quot;memory&quot; (memory 0))
+
+    ;; Write 'hello world\n' to memory at an offset of 8 bytes
+    ;; Note the trailing newline which is required for the text to appear
+    (data (i32.const 8) &quot;hello world\n&quot;)
+
+    (func $main (export &quot;_start&quot;)
+        ;; Creating a new io vector within linear memory
+        (i32.store (i32.const 0) (i32.const 8))  ;; iov.iov_base - This is a pointer to the start of the 'hello world\n' string
+        (i32.store (i32.const 4) (i32.const 12))  ;; iov.iov_len - The length of the 'hello world\n' string
+
+        (call $fd_write
+            (i32.const 1) ;; file_descriptor - 1 for stdout
+            (i32.const 0) ;; *iovs - The pointer to the iov array, which is stored at memory location 0
+            (i32.const 1) ;; iovs_len - We're printing 1 string stored in an iov - so one.
+            (i32.const 20) ;; nwritten - A place in memory to store the number of bytes written
+        )
+        drop ;; Discard the number of bytes written from the top of the stack
+    )
+)
+</code></pre>
+<p>这熟悉的感觉，这不就是我们最开始Hello world那一章的例子嘛！在经历了这么多之后，我们再来看这段代码，是不是清晰了很多呢。</p>
+<p>没错，这就是一个简单的输出&quot;Hello world\n&quot;的程序嘛。唯一值得注意的，就是<code>import</code>中的&quot;wasi_unstable&quot;模块，以及将<code>$main</code>函数导出为<code>_start</code>这两点。</p>
+<p>我们之前在讲导入导出时提过，<code>import</code>后的第一个字符串是模块名，而我们使用Rust/JavaScript向其导入函数时，并没有什么特殊的操作，只是把这个模块名当作一个key来用。而在这里，&quot;wasi_unstable&quot;就是指WASI这个模块名。当我们的模块名是这个（或者&quot;wasi_snapshot_preview1&quot;，<strong>目前</strong>并没有什么区别）时，就代表我们想引入的是WASI规定的接口，这里就是&quot;fd_write`这个函数。</p>
+<p>那么，将<code>$main</code>函数导出为<code>_start</code>这个符号又是为什么呢？这目前遵循的是<a href="https://github.com/WebAssembly/tool-conventions/blob/main/BasicCABI.md#program-entrypoint">C ABI的入口点标准</a>以及<a href="https://github.com/WebAssembly/WASI/blob/main/legacy/application-abi.md#current-unstable-abi">WASI Application ABI</a>，也就是说，当我们的程序作为独立的程序在操作系统中执行时，程序的入口点目前的符号就是<code>_start</code>。</p>
+<h2 id="wasi程序的使用"><a class="header" href="#wasi程序的使用">WASI程序的使用</a></h2>
+<p>那么，我们该如何使用WASI程序呢？首先值得指出，遵循WASI接口的WASM程序，它在二进制层面，和普通的WASM程序没有任何区别，它就是个WASM程序。因此，我们还是可以通过<code>wat2wasm</code>将文本格式转变为二进制格式。</p>
+<h3 id="作为独立程序使用"><a class="header" href="#作为独立程序使用">作为独立程序使用</a></h3>
+<p>当我们编写的WASI程序是一个独立程序时（例如上面的hello world程序），在Hello world一章中我们提到，可以直接</p>
+<pre><code class="language-shell">wasmer run standalone.wasm
+</code></pre>
+<p>使用<code>wasmer</code>或者<code>wasmtime</code>直接运行。</p>
+<h3 id="作为库使用"><a class="header" href="#作为库使用">作为库使用</a></h3>
+<p>从某种意义上来说，将WASI程序作为独立程序使用，就是一种将其作为库使用的特殊情形。因此，我们来讨论一下，将WASI程序作为库使用是怎样的。</p>
+<p>我们之前提到，WASI本身只是一个接口，还需要嵌入环境的实现。因此，当我们执行WASI程序时，是需要给出其实现的：</p>
+<ul>
+<li>当我们在Web上使用WASI程序时，需要使用<a href="https://wasi.dev/polyfill/">WASI polyfill</a></li>
+<li>当我们使用wasmer引擎运行WASI程序时，需要使用<a href="https://crates.io/crates/wasmer-wasi">wasmer-wasi</a></li>
+<li>当我们使用wasmtime引擎运行WASI程序时，需要使用<a href="https://crates.io/crates/wasmtime-wasi">wasmtime-wasi</a></li>
+</ul>
+<p>目前来看，我们使用的逻辑就是：</p>
+<p>各个环境实现WASI --&gt; 在执行的时候，由引擎将实现导入 --&gt; 执行WASI程序</p>
+<h2 id="wasi程序的生成"><a class="header" href="#wasi程序的生成">WASI程序的生成</a></h2>
+<p>当我们使用C/C++或Rust生成WASI程序时，如果还需要手动引入WASI头文件，然后手动调用WASI提供的接口，未免有些麻烦了。事实上，对于C/C++而言，我们有<a href="https://github.com/WebAssembly/wasi-libc">wasi-libc</a>，而Rust的libc也有<a href="https://rust-lang.github.io/libc/wasm32-wasi/doc/libc/index.html">wasi版本</a>。</p>
+<p>简单来说，就是我们使用WASI定义的接口，实现了大部分libc的函数。那么我们基于libc写的C、Rust函数，就可以无缝生成wasi版本了。</p>
+<h2 id="component-model"><a class="header" href="#component-model">Component Model</a></h2>
+<p>不考虑我们手写WASM程序的情形，那么我们遵循WASI接口的WASM程序，从生成到使用，其步骤是</p>
+<ol>
+<li>各平台实现基于WASI接口的libc</li>
+<li>正常使用高级语言编写基于libc接口的程序</li>
+<li>编译器基于WASI接口的libc，生成遵循WASI接口的WASM程序</li>
+<li>针对不同的执行引擎，引入相应的WASI实现</li>
+<li>执行引擎将WASI实现导入WASM模块</li>
+<li>执行引擎执行WASM程序</li>
+</ol>
+<p>我们会发现，在生成WASI程序的时候，看上去还不错，耦合性并不高，基于WASI接口的libc根据平台实现，不同编程语言的libc接口由编程语言实现，WASM程序的生成由编译器实现。但是到了执行WASI程序的时候，耦合性就上来了。每个执行引擎都有WASI的实现，但这似乎毫无必要，因为WASI的实现应该与执行引擎无关才对。</p>
+<p>因此，目前WASM社区正在摸索一条基于「<a href="https://github.com/WebAssembly/component-model">Component Model</a>」的道路。这个模型不仅适用于WASI，实际上也适用于大部分的导入导出情形。简单而言，就是说我们在执行WASM程序的时候，可以粗略地看做三部分：执行引擎、WASM程序、其他语言编写的导入函数。执行引擎通过将其他语言编写的导入函数导入到WASM程序之中，就可以执行WASM程序。这样的话，就能巧妙地解决我们上述提到的，WASI的实现耦合性较高的问题了。</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="elasticlunr.min.js"></script>
+        <script src="mark.min.js"></script>
+        <script src="searcher.js"></script>
+
+        <script src="clipboard.min.js"></script>
+        <script src="highlight.js"></script>
+        <script src="book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+        <script>
+        window.addEventListener('load', function() {
+            MathJax.Hub.Register.StartupHook('End', function() {
+                window.setTimeout(window.print, 100);
+            });
+        });
+        </script>
+
+    </body>
+</html>

@@ -1,0 +1,303 @@
+<!DOCTYPE HTML>
+<html lang="zh-Hans" class="sidebar-visible no-js light">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>变量与常量 - WASM 汇编入门教程</title>
+
+
+        <!-- Custom HTML head -->
+        
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff" />
+
+        <link rel="icon" href="favicon.svg">
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="highlight.css">
+        <link rel="stylesheet" href="tomorrow-night.css">
+        <link rel="stylesheet" href="ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+        <!-- MathJax -->
+        <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    </head>
+    <body>
+        <!-- Provide site root to javascript -->
+        <script>
+            var path_to_root = "";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "light";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            var html = document.querySelector('html');
+            html.classList.remove('no-js')
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add('js');
+        </script>
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            var html = document.querySelector('html');
+            var sidebar = 'hidden';
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            }
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <div class="sidebar-scrollbox">
+                <ol class="chapter"><li class="chapter-item expanded affix "><a href="index.html">引言</a></li><li class="chapter-item expanded "><a href="01-Helloworld.html"><strong aria-hidden="true">1.</strong> Hello world</a></li><li class="chapter-item expanded "><a href="02-基础概念与工具链.html"><strong aria-hidden="true">2.</strong> 基础概念与工具链</a></li><li class="chapter-item expanded "><a href="03-WASM的生成.html"><strong aria-hidden="true">3.</strong> WASM的生成</a></li><li class="chapter-item expanded "><a href="04-WASM的使用.html"><strong aria-hidden="true">4.</strong> WASM的使用</a></li><li class="chapter-item expanded "><a href="05-基本语法.html"><strong aria-hidden="true">5.</strong> 基本语法</a></li><li class="chapter-item expanded "><a href="06-变量与常量.html" class="active"><strong aria-hidden="true">6.</strong> 变量与常量</a></li><li class="chapter-item expanded "><a href="07-控制语句与基本块.html"><strong aria-hidden="true">7.</strong> 控制语句与基本块</a></li><li class="chapter-item expanded "><a href="08-导入与导出.html"><strong aria-hidden="true">8.</strong> 导入与导出</a></li><li class="chapter-item expanded "><a href="09-内存与引用.html"><strong aria-hidden="true">9.</strong> 内存与引用</a></li><li class="chapter-item expanded "><a href="10-WASI.html"><strong aria-hidden="true">10.</strong> WASI</a></li></ol>
+            </div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky bordered">
+                    <div class="left-buttons">
+                        <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </button>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">WASM 汇编入门教程</h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/Evian-Zhang/wasm-tutorial" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="变量与常量"><a class="header" href="#变量与常量">变量与常量</a></h1>
+<p>在讲基本语法时，我们故意地忽略了函数的参数、返回值相关的深入知识。在这一章里，我们将连同这些知识一起，统一介绍在WASM中的变量与常量。</p>
+<h2 id="局部变量"><a class="header" href="#局部变量">局部变量</a></h2>
+<p>我们之前提到过，在<a href="http://troubles.md/wasm-is-not-a-stack-machine/">WebAssembly Is Not a Stack Machine</a>一文中指出，WASM的局部变量设计让它不是一个真正的栈机，甚至可以说是一个寄存器机。同时，这也让WASM代码很难变成SSA形式，从而难以利用SSA的各种优化。那么，我们来看看，WASM的局部变量究竟是如何设计的。</p>
+<p>在WASM中，我们可以这样声明一个函数：</p>
+<pre><code class="language-wasm">(func (param $a i32) (param $b i32) (result i32)
+    (local $c i32)
+    ;; ...
+)
+</code></pre>
+<p>在这里，我们定义了一个函数，它接受两个<code>i32</code>类型的参数，返回一个<code>i32</code>类型的值，并且主动声明了一个<code>i32</code>类型的局部变量。事实上，与C语言类似，除了我们主动声明的局部变量外，函数的参数也可以看做局部变量。也就是说，这个函数的局部变量，是<code>$a</code>、<code>$b</code>和<code>$c</code>。因此，我们之前提到，除了可以通过标识符来引用WASM的元素之外，也可以通过每个元素自带的编号来引用。而对于局部变量来说，其编号是从参数开始编的。也就是说，对于我们这个函数来说，参数<code>$a</code>的编号是0，而局部变量<code>$c</code>的编号是2。</p>
+<p>对于局部变量，我们最常做的两个操作是<code>local.get</code>和<code>local.set</code>。例如：</p>
+<pre><code class="language-wasm">local.get $a
+</code></pre>
+<p>将返回局部变量<code>$a</code>的值，也就是说往栈上压入一个<code>$a</code>的值。</p>
+<pre><code class="language-wasm">local.set $a
+</code></pre>
+<p>则是将栈顶元素弹出，并赋值给局部变量<code>$a</code>。</p>
+<p>在我们使用高级语言编程的过程中，一个常见的编程错误是使用未初始化的变量。例如，当我们在Rust中写下如下语句：</p>
+<pre><code class="language-rust  ignore">fn foo() {
+    let a: i32;
+    let b = a - 1;
+}</code></pre>
+<p>会报错：</p>
+<pre><code class="language-plaintext">error[E0381]: used binding `a` isn't initialized
+ --&gt; src/lib.rs:3:13
+  |
+2 |     let a: i32;
+  |         - binding declared here but left uninitialized
+3 |     let b = a - 1;
+  |             ^ `a` used here but it isn't initialized
+  |
+help: consider assigning a value
+  |
+2 |     let a: i32 = 0;
+  |                +++
+</code></pre>
+<p>很显然，使用未初始化的变量会造成程序错误。</p>
+<p>在WASM中，我们会遇到同样的问题吗？我们可以编写如下程序：</p>
+<pre><code class="language-wasm">(module
+    (func (export &quot;local_initialize&quot;) (result i32)
+        (local $dummy i32)
+        local.get $dummy
+    )
+)
+</code></pre>
+<p>我们并没有手动给<code>$dummy</code>变量赋值，那么我们直接获取它的值会发生什么呢？我们可以把这个程序放在各种WASM引擎中运行，会发现这个函数顺利通过了「验证」阶段，并且执行的结果是0。</p>
+<p>事实上，在WASM的核心标准中（<a href="https://webassembly.github.io/spec/core/exec/instructions.html#invocation-of-function-address-a">这一段</a>）规定了，在调用一个函数的时候，它的局部变量是已经被初始化了的。而对于我们常用的数字类型来说，其默认值就是0。因此，在WASM中，不会出现使用未初始化的局部变量的问题（顺便一提，在<a href="https://github.com/WebAssembly/function-references">Function Reference Types Proposal</a>这个提案中引入了非Null的引用类型，这种类型就没有默认值了）。</p>
+<h3 id="寄存器机"><a class="header" href="#寄存器机">寄存器机</a></h3>
+<p>我们可以声明任意多个局部变量，而这些局部变量，都可以用来存放--获取值。所以，一个局部变量实际上就是一个寄存器，而我们的WASM，实际上变成了一个拥有无数个寄存器的寄存器机！</p>
+<p>这该如何理解呢？我们知道，寄存器机就是可以把变量临时存放在寄存器中，在参与运算的时候，将寄存器的值给相应的指令即可。那么，例如对于<code>i32.add</code>指令，我们可以将其操作数利用<code>local.set</code>先存放在两个局部变量中。在执行指令之前，再使用<code>local.get</code>将两个局部变量的值读出放在栈上，就模拟出了寄存器机。</p>
+<p>寄存器机好不好呢？我只能说，SSA的寄存器机是好文明。所谓SSA，简单来说就是指任何一个寄存器的值都是不可变的。如果我们想改变一个寄存器的值，那最好的方法就是再用一个新的寄存器。SSA的寄存器机编写的代码，能够非常高效地进行各种程序自动分析算法，例如活性检测算法等，从而能得到更好的优化结果。LLVM IR就是一个著名的SSA的寄存器机。但很显然，WASM不是一个SSA的寄存器机。直观上来看，在对栈机编写的代码进行程序分析时，可以轻松地将其转变为SSA的寄存器机。</p>
+<h3 id="局部变量的必要性"><a class="header" href="#局部变量的必要性">局部变量的必要性</a></h3>
+<p>为什么WASM会引入局部变量，而让它不完全是一个栈机，甚至不是SSA的寄存器机呢？从历史上看，WASM设计之初的目标并不是成为一个底层指令集，而且也没有很好的编译器实现，所以就自然引入了局部变量机制（详情可看<a href="http://troubles.md/wasm-is-not-a-stack-machine/#why">这一节</a>）。</p>
+<p>但是对于这样的底层语言来说，历史原因往往并不重要，因为大部分情况下，WASM都是直接由编译器自高级语言生成。所以如果我们不想被局部变量破坏了我们的栈机，为什么不直接让编译器不生成局部变量呢？因此，这就涉及到了局部变量的必要性。也就是说，在WASM代码中，有一些事，不能通过栈机来实现，而只能通过局部变量来实现。</p>
+<p>这里需要指出，WASM层面的局部变量的必要性，并不与高级语言层面的局部变量的必要性挂钩。例如我们的C语言程序</p>
+<pre><code class="language-c">int a = 1 + 2;
+int b = 3 * 4;
+int c = a &amp; b;
+int d = 5 - 2;
+int e = c / d;
+</code></pre>
+<p>尽管这里C语言中用了好多局部变量，但是这些仍然可以只用栈机来描述，也就是通过压栈、弹栈，而不通过存放寄存器，仍然能够实现这样的操作。那究竟怎样的操作不能通过栈机来描述呢？</p>
+<p>第一个原因是语言设计上的限制。首先，在很早之前，WASM的局部作用域（比如说<code>block</code>）是不能读取这个作用域开始之前的栈上的内容的，因此只能通过局部变量来传递一些值。这个问题在「WASM is not a stack machine」这篇文章里被着重强调了。</p>
+<p>但到了2023年的今天，<a href="https://github.com/WebAssembly/spec/blob/master/proposals/multi-value/Overview.md">multi-value提案</a>已经成了标准化的WASM特性，被各大引擎都实现了，上述这个问题也不再是问题了。那我们还有用局部变量的必要性吗？</p>
+<p>针对这个问题，我特意请教了之前这篇文章的作者<a href="https://github.com/Vurich">JEF</a>。我节选一下他关于这的回信：</p>
+<blockquote>
+<p>I believe that locals are still necessary as (as far as I know) Wasm still doesn't have any stack manipulation instructions such as <a href="https://en.wikipedia.org/wiki/PEEK_and_POKE">peek and poke</a>. This means that if you want to store values for later you still need locals.</p>
+</blockquote>
+<p>简单来说，第二个问题是复用的问题。我们在编程的过程中，往往需要变量的复用，如在C语言中：</p>
+<pre><code class="language-c">int a = 1 + 2;
+int b = 3 * a;
+int c = a &amp; b;
+int d = 5 - a;
+int e = a + c / d;
+</code></pre>
+<p>可以看到，这里变量<code>a</code>在很多语句中都被使用。但是对于栈机来说，不能保证每次在构建这些值的时候，<code>a</code>的值都在栈顶。对于真正的栈机，往往会提供<code>peek</code>和<code>poke</code>指令。<code>peek</code>可以将此时栈上指定位置的值复制到栈顶，而<code>poke</code>则可将栈顶的值插入到栈的指定位置中。目前WASM并没有这样的指令，不过我们可以模拟出来，之后在控制语句与基本块一章中，我们会给出一个实际的例子。</p>
+<p>所以在WASM中，我们仍然需要局部变量机制来存储这些值，也就是说，在计算出<code>a</code>的值后，我们需要一个<code>local.set</code>将其临时存储。在之后计算别的值的时候如果需要用到<code>a</code>，再使用<code>local.get</code>。</p>
+<h2 id="常量"><a class="header" href="#常量">常量</a></h2>
+<p>我们之前的WASM代码中，指令的操作数最终都是通过<code>local.get</code>来获得的，但是往往我们还是会需要常量的，比如说<code>b = a + 1</code>，其一个操作数可以通过<code>local.get</code>来获取，但是另一个操作数就需要常量<code>1</code>。</p>
+<p>在WASM中，我们可以使用</p>
+<pre><code class="language-wasm">i32.const 1
+</code></pre>
+<p>这种语句来获得一个常量1。</p>
+<h2 id="全局变量"><a class="header" href="#全局变量">全局变量</a></h2>
+<p>WASM也支持全局变量。我们可以用<code>global</code>来声明，通过<code>global.get</code>来获取。例如：</p>
+<pre><code class="language-wasm">(module
+    (global $kitzuki i32 (i32.const 323))
+    (func $get_kitzuki (result i32)
+        global.get $kitzuki
+    )
+)
+</code></pre>
+<p>我们声明了一个叫<code>$kitzuki</code>的全局变量，其初始值为323（WASM的全局变量必须初始化）。随后，我们在函数<code>$get_kitzuiki</code>中，使用了<code>global.get</code>获取了这个全局变量的值。</p>
+<p>对于全局变量的设置，也就是<code>global.set</code>，则有一点点不太一样。正如Rust需要特别使用<code>static mut</code>来声明可变的静态变量，在WASM中，我们也需要<code>mut</code>来声明可变的全局变量：</p>
+<pre><code class="language-wasm">(module
+    (global $kitzuki (mut i32) (i32.const 323))
+    (func $set_kitzuki
+        (global.set $kitzuki (i32.const 1219))
+    )
+)
+</code></pre>
+<p>在这里，我们声明了一个可变的全局变量<code>$kitzuki</code>，初始值为323。随后，我们使用<code>global.set</code>给其赋值为1219。</p>
+<p>在WASM中，全局变量和局部变量类似，也会破坏栈机的性质。不过对于目前现代化的高级语言以及高级的编程模型，我们往往并不需要全局变量。全局变量在WASM中还有一个作用是通过导入与导出，与外界传递信息。不过这个留在之后的章节再说。</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="05-基本语法.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next" href="07-控制语句与基本块.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="05-基本语法.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next" href="07-控制语句与基本块.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="elasticlunr.min.js"></script>
+        <script src="mark.min.js"></script>
+        <script src="searcher.js"></script>
+
+        <script src="clipboard.min.js"></script>
+        <script src="highlight.js"></script>
+        <script src="book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+    </body>
+</html>

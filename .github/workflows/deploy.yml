@@ -1,0 +1,55 @@
+name: CI
+on: [push, pull_request]
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+    - name: Install mdbook
+      run: |
+        cargo install mdbook
+    - name: Clone highlight.js repo
+      uses: actions/checkout@v3
+      with:
+        repository: highlightjs/highlight.js
+        path: highlight.js
+        fetch-depth: 0
+    - name: Build highlight.js
+      run: |
+        npm install
+        node tools/build.js \
+          bash \
+          c \
+          ini \
+          lisp \
+          llvm \
+          x86asm \
+          javascript \
+          plaintext \
+          shell \
+          rust \
+          wasm \
+          xml
+      working-directory: highlight.js
+    - name: Prepare theme
+      run: |
+        mkdir -p theme
+        cp highlight.js/build/highlight.min.js theme/highlight.js
+    - name: Deploy GitHub Pages
+      run: |
+        mdbook build
+        git worktree add gh-pages
+        git config user.name "Deploy from CI"
+        git config user.email ""
+        cd gh-pages
+        # Delete the ref to avoid keeping history.
+        git update-ref -d refs/heads/gh-pages
+        rm -rf *
+        mv ../book/* .
+        git add .
+        git commit -m "Deploy $GITHUB_SHA to gh-pages"
+        git push --force --set-upstream origin gh-pages

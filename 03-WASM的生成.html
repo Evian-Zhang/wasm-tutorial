@@ -1,0 +1,319 @@
+<!DOCTYPE HTML>
+<html lang="zh-Hans" class="sidebar-visible no-js light">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>WASM的生成 - WASM 汇编入门教程</title>
+
+
+        <!-- Custom HTML head -->
+        
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff" />
+
+        <link rel="icon" href="favicon.svg">
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="highlight.css">
+        <link rel="stylesheet" href="tomorrow-night.css">
+        <link rel="stylesheet" href="ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+        <!-- MathJax -->
+        <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    </head>
+    <body>
+        <!-- Provide site root to javascript -->
+        <script>
+            var path_to_root = "";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "light";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            var html = document.querySelector('html');
+            html.classList.remove('no-js')
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add('js');
+        </script>
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            var html = document.querySelector('html');
+            var sidebar = 'hidden';
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            }
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <div class="sidebar-scrollbox">
+                <ol class="chapter"><li class="chapter-item expanded affix "><a href="index.html">引言</a></li><li class="chapter-item expanded "><a href="01-Helloworld.html"><strong aria-hidden="true">1.</strong> Hello world</a></li><li class="chapter-item expanded "><a href="02-基础概念与工具链.html"><strong aria-hidden="true">2.</strong> 基础概念与工具链</a></li><li class="chapter-item expanded "><a href="03-WASM的生成.html" class="active"><strong aria-hidden="true">3.</strong> WASM的生成</a></li><li class="chapter-item expanded "><a href="04-WASM的使用.html"><strong aria-hidden="true">4.</strong> WASM的使用</a></li><li class="chapter-item expanded "><a href="05-基本语法.html"><strong aria-hidden="true">5.</strong> 基本语法</a></li><li class="chapter-item expanded "><a href="06-变量与常量.html"><strong aria-hidden="true">6.</strong> 变量与常量</a></li><li class="chapter-item expanded "><a href="07-控制语句与基本块.html"><strong aria-hidden="true">7.</strong> 控制语句与基本块</a></li><li class="chapter-item expanded "><a href="08-导入与导出.html"><strong aria-hidden="true">8.</strong> 导入与导出</a></li><li class="chapter-item expanded "><a href="09-内存与引用.html"><strong aria-hidden="true">9.</strong> 内存与引用</a></li><li class="chapter-item expanded "><a href="10-WASI.html"><strong aria-hidden="true">10.</strong> WASI</a></li></ol>
+            </div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky bordered">
+                    <div class="left-buttons">
+                        <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </button>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">WASM 汇编入门教程</h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/Evian-Zhang/wasm-tutorial" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="wasm的生成"><a class="header" href="#wasm的生成">WASM的生成</a></h1>
+<p>在我们学习底层语言，如LLVM IR、AMD64和AArch64汇编等的过程中，一个非常有效的方法是，将自己熟悉的高级语言编译为相应的底层语言，从而了解不同的语义是怎样在底层实现的。因此，我们在学习WASM的过程中，首先也可以先学习一下如何由高级语言生成WASM。</p>
+<p>目前最主流的生成WASM的高级语言是Rust和C/C++，因此，本章也主要以这两个语言为例说明。</p>
+<h2 id="rust程序生成wasm"><a class="header" href="#rust程序生成wasm">Rust程序生成WASM</a></h2>
+<p>我们可以用<code>rustup</code>程序来管理Rust语言能够生成的目标平台，例如，使用</p>
+<pre><code class="language-shell">rustup target list
+</code></pre>
+<p>可以查看目前Rust支持生成哪些平台的程序。我们可以在这其中看到<code>wasm32-unknown-unknown</code>和<code>wasm32-wasi</code>。目前，我们需要<code>wasm32-unknown-unknown</code>。因此，我们使用</p>
+<pre><code class="language-shell">rustup target add wasm32-unknown-unknown
+</code></pre>
+<p>下载安装相应的组件，随后，我们就可以使用Rust生成WASM程序了。</p>
+<h3 id="基础方法"><a class="header" href="#基础方法">基础方法</a></h3>
+<p>我们使用</p>
+<pre><code class="language-shell">cargo new --lib rust-wasm-adder
+</code></pre>
+<p>生成一个默认的Rust库<code>rust-wasm-adder</code>。</p>
+<p>首先，我们需要修改<code>Cargo.toml</code>，在其中加上</p>
+<pre><code class="language-toml">[lib]
+crate-type = [&quot;cdylib&quot;]
+</code></pre>
+<p>随后，在<code>lib.rs</code>中写上</p>
+<pre><code class="language-rust  ignore">#[no_mangle]
+pub extern &quot;C&quot; fn add(left: usize, right: usize) -&gt; usize {
+    left + right
+}</code></pre>
+<p>然后，使用</p>
+<pre><code class="language-shell">cargo build --release --target wasm32-unknown-unknown
+</code></pre>
+<p>编译后，就可以在<code>target/wasm32-unknown-unknown/release/</code>目录下找到<code>rust_wasm_adder.wasm</code>文件，这就是我们生成的WASM程序。这个WASM程序提供了<code>add</code>函数，我们可以使用Hello world一章中提供的方法，在Web或者后端将这个WASM作为库使用，来验证我们确实生成成功了。</p>
+<p>关于这段Rust代码，有几点值得指出说明。</p>
+<h4 id="no_mangle"><a class="header" href="#no_mangle"><code>#[no_mangle]</code></a></h4>
+<p>首先是<code>#[no_mangle]</code>。这个属性和<code>#[export_name = &quot;xxxx&quot;]</code>一样，在Rust官方文档的<a href="https://doc.rust-lang.org/reference/abi.html">Application Binary Interface</a>中有说明。这些属性一般而言，是在我们用Rust写一些提供给别的语言调用的库函数时使用，用来关闭命名修饰（Name mangling）。但是在目标平台为WASM时，语义会有少许变化。在这里，使用<code>#[no_mangle]</code>属性，除了告诉编译器，生成的函数名字在二进制层面就叫<code>add</code>以外，还有一个作用，是让编译器<strong>导出</strong>这个符号。我们知道，当我们使用一个Rust crate的时候，只能使用其中用<code>pub</code>修饰的函数。但是，<code>pub</code>只是Rust语义层面的。在WASM层面，我们必须使用<code>#[no_mangle]</code>或者<code>#[export_name = &quot;xxxx&quot;]</code>这个属性，才能确保编译器确实导出了这个函数。</p>
+<h4 id="extern-c"><a class="header" href="#extern-c"><code>extern &quot;C&quot;</code></a></h4>
+<p>其次是<code>extern &quot;C&quot;</code>。同样地，这个修饰符在一般情况下，是用来告诉编译器，这个函数的ABI采用C语言的ABI，以便在生成二进制库的时候可以被别的编程语言调用。而在生成目标为WASM的情况下，目前Rust的<code>extern &quot;wasm&quot;</code><a href="https://github.com/rust-lang/rust/issues/83788">还没有稳定</a>，所以暂时也是使用<code>extern &quot;C&quot;</code>来声明ABI。</p>
+<h4 id="usize"><a class="header" href="#usize"><code>usize</code></a></h4>
+<p>还有一点值得注意，我们之前提到，目前通用的WASM程序可以看做32位平台，因为其内存最多只有32位。所以，<code>usize</code>在这个平台下实际上是<code>u32</code>。我们通过</p>
+<pre><code class="language-shell">wasm2wat target/wasm32-unknown-unknown/release/rust_wasm_adder.wasm -o rust_wasm_adder.wat
+</code></pre>
+<p>也可以看到这一段代码：</p>
+<pre><code class="language-wasm">(func $add (type 0) (param i32 i32) (result i32)
+  local.get 1
+  local.get 0
+  i32.add)
+</code></pre>
+<p>从这也可以看出来，确实参数确实是32位（关于WASM中的<code>i32</code>和Rust中的<code>u32</code>的关系，之后我们会解释）。</p>
+<h4 id="导出函数"><a class="header" href="#导出函数">导出函数</a></h4>
+<p>还有一点值得指出的是，上面这些额外的修饰，只有在该函数需要被导出时才需要使用。也就是说，如果我们写的Rust程序内部有一些内部的函数，不需要在WASM中导出，用来被别的语言使用，那么就不需要加这些额外的修饰。</p>
+<h4 id="系统交互"><a class="header" href="#系统交互">系统交互</a></h4>
+<p>此外，我们之前提到过，WASM本身提供的基础指令，是没有办法进行系统调用的。WASI提供了一套与系统交互的接口，供WASM来使用。因此，当我们Rust程序的目标平台是<code>wasm32-unknown-unknown</code>时（也就是说，不使用WASI），是没有办法，在不导入别的函数的情况下，直接进行系统操作的。因此，如果我们的<code>add</code>函数写成</p>
+<pre><code class="language-rust  ignore">#[no_mangle]
+pub extern &quot;C&quot; fn add(left: usize, right: usize) -&gt; usize {
+    println!(&quot;This is add in WASM&quot;);
+    left + right
+}</code></pre>
+<p>在执行这个WASM模块的时候，是不会产生任何输出的。这是因为<code>println</code>宏需要对<code>stdout</code>进行写操作，而这是WASI提供的能力，因此是做不到输出的。</p>
+<h3 id="wasm-bindgen"><a class="header" href="#wasm-bindgen"><code>wasm-bindgen</code></a></h3>
+<p>从上面的讨论我们可以知道，Rust本身虽然支持直接生成WASM程序，但是目前还有一些功能不稳定，例如<code>extern &quot;wasm&quot;</code>不稳定所以只能使用<code>extern &quot;C&quot;</code>。因此，在使用Rust编写WASM程序的过程中，往往更广泛使用的是一个叫<a href="https://crates.io/crates/wasm-bindgen"><code>wasm-bindgen</code></a>的库。这个库有其<a href="https://rustwasm.github.io/docs/wasm-bindgen/">官方文档</a>。</p>
+<p>最基础地，<code>wasm-bindgen</code>提供了一个宏，让我们直接定义需要导出的WASM函数：</p>
+<pre><code class="language-rust  ignore">use wasm_bindgen::prelude::*;
+
+#[wasm_bindgen]
+pub fn add(left: usize, right: usize) -&gt; usize {
+    left + right
+}</code></pre>
+<p>通过<code>#[wasm_bindgen]</code>这个宏，我们不需要再手动写之前很长的一大堆<code>#[no_mangle]</code>之类的东西。同时，这样的封装也有助于向后兼容。之后<code>extern &quot;wasm&quot;</code>稳定之后，只需要<code>wasm-bindgen</code>这个库内部改动一下，就可以适配新版本，而不需要开发者再手动修改了。</p>
+<p>此外，这个库还有一个很重要的目的，是解决了WASM与JavaScript交互的问题。以其README里的代码简单举个例子：</p>
+<pre><code class="language-rust  ignore">use wasm_bindgen::prelude::*;
+
+// Import the `window.alert` function from the Web.
+#[wasm_bindgen]
+extern &quot;C&quot; {
+    fn alert(s: &amp;str);
+}
+
+// Export a `greet` function from Rust to JavaScript, that alerts a
+// hello message.
+#[wasm_bindgen]
+pub fn greet(name: &amp;str) {
+    alert(&amp;format!(&quot;Hello, {}!&quot;, name));
+}</code></pre>
+<p>之前提到，不借助WASI，WASM的程序是没办法再不导入函数的情况下与系统交互的。而这里，我们使用<code>#[wasm_bindgen]</code>这个宏，就可以在WASM之中使用<code>window.alert</code>函数了！</p>
+<p>关于这个功能，之后在介绍WASM的函数导入与导出时，会再详细介绍。</p>
+<h2 id="c程序生成wasm"><a class="header" href="#c程序生成wasm">C程序生成WASM</a></h2>
+<p>毫无疑问，C/C++是目前使用平台最广的编程语言。因此，我们也可以将C/C++程序生成WASM。这里以C程序为例。</p>
+<h3 id="clang"><a class="header" href="#clang">Clang</a></h3>
+<p>第一种方案，与Rust类似，使用LLVM后端来做代码生成。因此，对应的编译器为Clang。</p>
+<p>我们编写一个简单的程序<code>add.c</code>：</p>
+<pre><code class="language-c">int add(int left, int right) __attribute__((export_name(&quot;add&quot;))) {
+    return left + right;
+}
+</code></pre>
+<p>使用如下命令生成WASM程序：</p>
+<pre><code class="language-shell">clang \
+  --target=wasm32-unknown-unknown -nostdlib \
+  -O3 \
+  -Wl,--no-entry -Wl,--export-dynamic \
+  -o adder.wasm \
+  adder.c
+</code></pre>
+<p>生成的<code>adder.wasm</code>也可以像Hello world一章中放在Web中或者后端程序中来检验。</p>
+<p>首先，我们使用了<code>--target=wasm32-unknown-unknown</code>来声明生成的目标平台，同时由于WASM程序不会使用系统的libc，也不会使用系统的crt等等，所以我们也需要使用<code>-nostdlib</code>来关闭对这些系统库的链接。</p>
+<p>此外，我们使用了<code>-Wl</code>选项。这个选项的意思是将后续的参数传递给链接器。这里我们传递给链接器的参数有<code>--no-entry</code>和<code>--export-all</code>。</p>
+<p>我们之前指出过，不使用WASI的WASM程序往往都是库程序，而不会直接作为独立的可执行程序。因此，也就不会有<code>_start</code>、<code>main</code>等entrypoint。所以我们需要传递给链接器<code>--no-entry</code>参数，让它别找entrypoint了。</p>
+<p>与Rust类似，我们也可以控制在WASM中导出的函数。当我们给链接器传递<a href="https://lld.llvm.org/WebAssembly.html#cmdoption-export-dynamic"><code>export-dynamic</code></a>参数时，在程序中以<a href="https://clang.llvm.org/docs/AttributeReference.html#export-name"><code>export_name</code></a>属性修饰的函数会被导出，而其余的函数是不会被导出的。在我们的例子中，使用了<code>__attribute__((export_name(&quot;add&quot;)))</code>，因此这个函数会以&quot;add&quot;的名字导出。</p>
+<h3 id="emscripten"><a class="header" href="#emscripten">Emscripten</a></h3>
+<p>之前了解WASM的开发者，想必一定听说过Emscripten的大名。Emscripten有悠久的历史，WASM的发展与其有很多很多的关系。简单来说，Emscripten就是提供了一整套工具链，让我们可以将C/C++程序编译为WASM程序。</p>
+<p>在早期，Emscripten的工作流程是，使用emcc将C/C++代码编译为LLVM IR，使用fastcomp将LLVM IR编译为asm.js语言（一种类似JavaScript的底层语言），然后使用我们之前提到的Binaryen工具链中的<code>asm2wasm</code>工具，将asm.js代码编译为WASM代码。这一过程详见<a href="https://9to5tutorial.com/i-don-t-know-how-binaryen-is-used-by-emscripten">I don't know how Binaryen is used by Emscripten</a>。</p>
+<p>而现在，Emscripten的工作流程是，使用emcc编译为LLVM IR之后，直接使用LLVM的wasm后端来生成wasm文件。Emscripten也和<code>wasm-bindgen</code>类似，提供了一些C/C++与系统交互的接口。</p>
+<p>Emscripten使用起来更为简单，我们编写<code>adder.c</code>:</p>
+<pre><code class="language-c">#include &lt;emscripten.h&gt;
+
+EMSCRIPTEN_KEEPALIVE int add(int left, int right) {
+    return left + right;
+}
+</code></pre>
+<p>随后使用</p>
+<pre><code class="language-shell">emcc adder.c -O3 -o adder.wasm
+</code></pre>
+<p>即可生成一个WASM程序。</p>
+<p>这里，我们就不再需要Clang的<code>export_name</code>属性，而是直接使用<code>EMSCRIPTEN_KEEPALIVE</code>宏即可。</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="02-基础概念与工具链.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next" href="04-WASM的使用.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="02-基础概念与工具链.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next" href="04-WASM的使用.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="elasticlunr.min.js"></script>
+        <script src="mark.min.js"></script>
+        <script src="searcher.js"></script>
+
+        <script src="clipboard.min.js"></script>
+        <script src="highlight.js"></script>
+        <script src="book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+    </body>
+</html>
