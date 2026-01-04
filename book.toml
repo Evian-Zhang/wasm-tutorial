@@ -1,7 +1,6 @@
 [book]
 authors = ["Evian-Zhang"]
 language = "zh-Hans"
-multilingual = false
 src = "src"
 title = "WASM 汇编入门教程"
 
